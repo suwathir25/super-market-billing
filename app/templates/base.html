@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - {{ store_name }}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom Theme CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Full-screen Loading Overlay -->
+    <div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.85); z-index: 99999; justify-content: center; align-items: center; flex-direction: column;">
+        <div class="spinner-border text-primary" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 5px;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <h5 class="mt-4 fw-bold text-primary animate-pulse" style="font-family: 'Outfit', sans-serif; letter-spacing: 0.05em;">PROCESSING NAVIGATION...</h5>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span style="font-size: 1.8rem;">🛒</span>
+            <h2>{{ store_name }}</h2>
+        </div>
+        
+        <ul class="sidebar-menu">
+            {% if g.user and g.user.role in ['admin', 'manager'] %}
+            <li class="sidebar-item">
+                <a href="{{ url_for('dashboard.index') }}" class="sidebar-link {% if request.path == '/' or request.path == '/dashboard' %}active{% endif %} loading-link">
+                    <span>🏠</span> Dashboard
+                </a>
+            </li>
+            
+            <li class="sidebar-item">
+                <a href="{{ url_for('product.index') }}" class="sidebar-link {% if '/products' in request.path %}active{% endif %} loading-link">
+                    <span>📦</span> Products
+                </a>
+            </li>
+            
+            <li class="sidebar-item">
+                <a href="{{ url_for('category.index') }}" class="sidebar-link {% if '/categories' in request.path %}active{% endif %} loading-link">
+                    <span>📁</span> Categories
+                </a>
+            </li>
+            
+            <li class="sidebar-item">
+                <a href="{{ url_for('customer.index') }}" class="sidebar-link {% if '/customers' in request.path %}active{% endif %} loading-link">
+                    <span>👥</span> Customers
+                </a>
+            </li>
+            {% endif %}
+            
+            <li class="sidebar-item">
+                <a href="{{ url_for('pos.index') }}" class="sidebar-link {% if '/pos' in request.path %}active{% endif %} loading-link">
+                    <span>🧾</span> Billing (POS)
+                </a>
+            </li>
+            
+            {% if g.user and g.user.role in ['admin', 'manager'] %}
+            <li class="sidebar-item">
+                <a href="{{ url_for('sales.index') }}" class="sidebar-link {% if '/sales' in request.path %}active{% endif %} loading-link">
+                    <span>📊</span> Sales History
+                </a>
+            </li>
+            
+            <li class="sidebar-item">
+                <a href="{{ url_for('reports.index') }}" class="sidebar-link {% if '/reports' in request.path %}active{% endif %} loading-link">
+                    <span>📋</span> Reports
+                </a>
+            </li>
+            {% endif %}
+            
+            {% if g.user and g.user.role == 'admin' %}
+            <li class="sidebar-item">
+                <a href="{{ url_for('user.list_users') }}" class="sidebar-link {% if '/users' in request.path %}active{% endif %} loading-link">
+                    <span>👤</span> Employees
+                </a>
+            </li>
+            
+            <li class="sidebar-item">
+                <a href="{{ url_for('settings.index') }}" class="sidebar-link {% if '/settings' in request.path %}active{% endif %} loading-link">
+                    <span>⚙</span> Settings
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+        
+        <div class="sidebar-footer">
+            <a href="{{ url_for('auth.logout') }}" class="logout-link">
+                <span>🚪</span> Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content" id="main-content">
+        <!-- Top bar/Header -->
+        <header class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+            <button class="btn btn-outline-secondary d-lg-none" id="sidebar-toggle">
+                ☰
+            </button>
+            <div class="header-title">
+                <h4 class="mb-0 fw-bold">{% block page_header %}{% endblock %}</h4>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                {% if g.user %}
+                <div class="text-end d-none d-md-block">
+                    <div class="fw-bold">{{ g.user.username }}</div>
+                    <small class="text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.05em;">
+                        {{ g.user.role }}
+                    </small>
+                </div>
+                <a href="{{ url_for('user.profile') }}" class="text-decoration-none">
+                    <div class="avatar-circle">
+                        {{ g.user.username[0].upper() }}
+                    </div>
+                </a>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Flash messages flash context -->
+        <div class="container-fluid p-0">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show border-0 shadow-sm animate-fade-up mb-4" role="alert" style="border-radius: 12px;">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Core layout block -->
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Toast Notifications wrapper -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom validation/AJAX javascript -->
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    
+    <script>
+        // Sidebar responsive drawer toggler
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebar = document.getElementById('sidebar');
+        if(sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+        }
+
+        // Global page navigation loading spinner overlay
+        document.addEventListener("DOMContentLoaded", function() {
+            const overlay = document.getElementById('loading-overlay');
+            document.querySelectorAll('.loading-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    const href = this.getAttribute('href');
+                    if (href && href !== '#' && !href.startsWith('javascript:')) {
+                        overlay.style.display = 'flex';
+                    }
+                });
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

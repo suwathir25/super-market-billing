@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}User Management{% endblock %}
+
+{% block page_header %}User Management{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-up">
+    <!-- User Creation Panel (Admin Only) -->
+    {% if current_user.role == 'admin' %}
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <h5 class="fw-bold mb-3" style="color: var(--primary-blue);">Create New User</h5>
+            <form action="{{ url_for('user.list_users') }}" method="POST" class="needs-validation" novalidate>
+                
+                <div class="mb-3">
+                    <label for="username" class="form-label fw-semibold">Username</label>
+                    <input type="text" name="username" id="username" class="form-control" placeholder="e.g. cashier_john" required pattern="^[a-zA-Z0-9_-]{3,20}$">
+                    <div class="invalid-feedback">3-20 characters, alphanumeric or hyphens/underscores.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label fw-semibold">Email Address</label>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="e.g. john@supermart.com" required>
+                    <div class="invalid-feedback">Enter a valid email address.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                    <input type="text" name="phone" id="phone" class="form-control" placeholder="e.g. 9876543210" required pattern="^\+?[0-9]{10,15}$">
+                    <div class="invalid-feedback">Enter a valid phone number (10-15 digits).</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label fw-semibold">Initial Password</label>
+                    <input type="password" name="password" id="password" class="form-control" required minlength="6">
+                    <div class="invalid-feedback">Password must be at least 6 characters and contain numbers and letters.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="role" class="form-label fw-semibold">Role</label>
+                    <select name="role" id="role" class="form-select" required>
+                        <option value="" disabled selected>Select Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="manager">Manager</option>
+                        <option value="cashier">Cashier</option>
+                    </select>
+                    <div class="invalid-feedback">Select a valid user role.</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mt-2">
+                    Create Account
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- User Table Display -->
+    <div class="{% if current_user.role == 'admin' %}col-lg-8{% else %}col-lg-12{% endif %}">
+        <div class="card shadow-sm">
+            <h5 class="fw-bold mb-3" style="color: var(--primary-blue);">System Users</h5>
+            
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            {% if current_user.role == 'admin' %}
+                            <th class="text-end">Actions</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar-circle" style="width: 38px; height: 38px; font-size: 0.95rem;">
+                                        {{ u.username[0].upper() }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ u.username }}</div>
+                                        <div class="text-muted small" style="font-size: 0.75rem;">Created: {{ u.created_at[:10] }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge text-uppercase {% if u.role == 'admin' %}bg-primary{% elif u.role == 'manager' %}bg-info{% else %}bg-secondary{% endif %}">
+                                    {{ u.role }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="small">{{ u.email }}</div>
+                                <div class="text-muted small">{{ u.phone if u.phone else 'No phone' }}</div>
+                            </td>
+                            <td>
+                                <span id="status-badge-{{ u.id }}" class="badge {% if u.status == 'active' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ u.status | capitalize }}
+                                </span>
+                            </td>
+                            
+                            {% if current_user.role == 'admin' %}
+                            <td class="text-end">
+                                <div class="d-inline-flex gap-2">
+                                    <!-- Toggle Status Button -->
+                                    {% if current_user.id != u.id %}
+                                    <button class="btn btn-sm {% if u.status == 'active' %}btn-outline-warning{% else %}btn-outline-success{% endif %} toggle-user-status-btn"
+                                            data-user-id="{{ u.id }}"
+                                            data-status="{{ u.status }}">
+                                        {% if u.status == 'active' %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <!-- Reset Password Trigger -->
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#resetModal-{{ u.id }}">
+                                        Reset Pwd
+                                    </button>
+                                </div>
+
+                                <!-- Reset Password Modal -->
+                                <div class="modal fade text-start" id="resetModal-{{ u.id }}" tabindex="-1" aria-labelledby="resetModalLabel-{{ u.id }}" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content" style="border-radius: 16px;">
+                                            <div class="modal-header border-0 pb-0">
+                                                <h5 class="modal-title fw-bold" id="resetModalLabel-{{ u.id }}">Reset Password: {{ u.username }}</h5>
+                                                <button type="button" class="btn-close" data-bs-target="#resetModal-{{ u.id }}" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form action="{{ url_for('user.reset_password', user_id=u.id) }}" method="POST" class="needs-validation" novalidate>
+                                                <div class="modal-body py-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">New Password</label>
+                                                        <input type="password" name="new_password" class="form-control" required minlength="6">
+                                                        <div class="invalid-feedback">Password must be at least 6 characters.</div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Confirm Password</label>
+                                                        <input type="password" name="confirm_password" class="form-control" required>
+                                                        <div class="invalid-feedback">Confirm password field is required.</div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer border-0 pt-0">
+                                                    <button type="button" class="btn btn-light" style="border-radius: 12px;" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger" style="border-radius: 12px;">Save New Password</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

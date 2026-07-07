@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_header %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<!-- Metrics cards -->
+<div class="row animate-fade-up">
+    <!-- Today's Sales -->
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card shadow-sm border-0">
+            <div>
+                <h6 class="text-muted small text-uppercase fw-semibold mb-1">Today's Sales</h6>
+                <h3 class="fw-bold mb-0" style="color: var(--primary-blue);">{{ data.sales }}</h3>
+            </div>
+            <div class="stat-icon icon-blue">
+                ₹
+            </div>
+        </div>
+    </div>
+    
+    <!-- Today's Profit -->
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card shadow-sm border-0">
+            <div>
+                <h6 class="text-muted small text-uppercase fw-semibold mb-1">Today's Profit</h6>
+                <h3 class="fw-bold mb-0" style="color: var(--secondary-green);">{{ data.profit }}</h3>
+            </div>
+            <div class="stat-icon icon-green">
+                📈
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Products -->
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card shadow-sm border-0">
+            <div>
+                <h6 class="text-muted small text-uppercase fw-semibold mb-1">Total Products</h6>
+                <h3 class="fw-bold mb-0">{{ data.products }}</h3>
+            </div>
+            <div class="stat-icon icon-orange">
+                📦
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Alert -->
+    <div class="col-md-3 mb-4">
+        <div class="card stat-card shadow-sm border-0">
+            <div>
+                <h6 class="text-muted small text-uppercase fw-semibold mb-1">Low Stock Alerts</h6>
+                <h3 class="fw-bold mb-0 {% if data.low_stock > 0 %}text-danger{% endif %}">{{ data.low_stock }}</h3>
+            </div>
+            <div class="stat-icon icon-red">
+                ⚠
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card shadow-sm border-0 mb-4 animate-fade-up">
+    <h5 class="fw-bold mb-3 text-dark">Quick Actions</h5>
+    <div class="d-flex flex-wrap gap-3">
+        <a href="{{ url_for('pos.index') }}" class="btn btn-outline-primary d-flex align-items-center gap-2 loading-link" style="border-radius: 12px; padding: 10px 20px;">
+            <span>🧾</span> POS Billing
+        </a>
+        <a href="{{ url_for('product.add') }}" class="btn btn-outline-success d-flex align-items-center gap-2 loading-link" style="border-radius: 12px; padding: 10px 20px;">
+            <span>➕</span> Add Product
+        </a>
+        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-info d-flex align-items-center gap-2 loading-link" style="border-radius: 12px; padding: 10px 20px;">
+            <span>📊</span> View Reports
+        </a>
+        {% if g.user and g.user.role == 'admin' %}
+        <a href="{{ url_for('user.list_users') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2" style="border-radius: 12px; padding: 10px 20px;">
+            <span>👥</span> Manage Users
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Graphs section -->
+<div class="row animate-fade-up">
+    <!-- Sales graph -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-dark">Sales & Profit Trends</h5>
+                <select class="form-select form-select-sm w-auto border-0 bg-light" id="chart-filter" style="border-radius: 8px;">
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+            <div style="position: relative; height: 320px;">
+                <canvas id="salesTrendsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Selling and alerts list -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <h5 class="fw-bold mb-3 text-dark">Top Selling Products</h5>
+            
+            {% if data.top_products %}
+                <ul class="list-group list-group-flush">
+                    {% for item in data.top_products %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-3 border-bottom border-light">
+                            <div class="d-flex align-items-center gap-2">
+                                <span style="font-size: 1.2rem;">⭐</span>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ item.name }}</div>
+                                    <small class="text-muted">Stock Remaining: {{ item.stock_quantity }}</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-success rounded-pill" style="padding: 6px 12px;">{{ item.total_sold }} sold</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="text-center py-5">
+                    <span style="font-size: 3rem;">🛍</span>
+                    <p class="text-muted mt-2 small">No sales recorded yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Tables section -->
+<div class="row animate-fade-up">
+    <!-- Recent Bills -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <h5 class="fw-bold mb-3 text-dark">Recent Bills</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr class="table-light">
+                            <th>Bill No</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if data.recent_bills %}
+                            {% for bill in data.recent_bills %}
+                                <tr>
+                                    <td class="fw-semibold text-primary">{{ bill.bill_number }}</td>
+                                    <td>{{ bill.customer_name }}</td>
+                                    <td class="fw-bold">{{ data.currency }}{{ "%.2f"|format(bill.total_amount) }}</td>
+                                    <td>
+                                        <span class="badge {% if bill.status == 'completed' %}bg-success{% elif bill.status == 'cancelled' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {{ bill.status | capitalize }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">No recent bills found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Items List -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <h5 class="fw-bold mb-3 text-dark">Low Stock Items</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr class="table-light">
+                            <th>Product Name</th>
+                            <th>Current Stock</th>
+                            <th>Min Stock Threshold</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if data.low_stock_items %}
+                            {% for item in data.low_stock_items %}
+                                <tr>
+                                    <td class="fw-semibold">{{ item.name }}</td>
+                                    <td class="text-danger fw-bold">{{ item.stock_quantity }}</td>
+                                    <td class="text-muted">{{ item.min_stock }}</td>
+                                    <td>
+                                        <span class="badge bg-danger">Reorder Required</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-success">
+                                    <span>✔</span> All products are well stocked!
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN for modern graphics rendering -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const ctx = document.getElementById('salesTrendsChart').getContext('2d');
+        
+        // Mock weekly/monthly data matching theme (Blue/Green gradients)
+        const chartData = {
+            weekly: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                sales: [12000, 15000, 18000, 14000, 22000, 28000, 25000],
+                profit: [2400, 3100, 3600, 2900, 4800, 6200, 5000]
+            },
+            monthly: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                sales: [320000, 390000, 410000, 380000, 490000, 550000],
+                profit: [64000, 78000, 82000, 76000, 98000, 110000]
+            }
+        };
+
+        const salesGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        salesGradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
+        salesGradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+        const profitGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        profitGradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+        profitGradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+        let trendsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.weekly.labels,
+                datasets: [
+                    {
+                        label: 'Gross Sales (₹)',
+                        data: chartData.weekly.sales,
+                        borderColor: '#2563eb',
+                        borderWidth: 3,
+                        backgroundColor: salesGradient,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Net Profit (₹)',
+                        data: chartData.weekly.profit,
+                        borderColor: '#10b981',
+                        borderWidth: 3,
+                        backgroundColor: profitGradient,
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: { family: 'Outfit', size: 12 }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                            font: { family: 'Outfit' },
+                            callback: function(value) { return '₹' + value.toLocaleString(); }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'Outfit' } }
+                    }
+                }
+            }
+        });
+
+        // Interactive filtering listener
+        const selectFilter = document.getElementById('chart-filter');
+        if(selectFilter) {
+            selectFilter.addEventListener('change', function() {
+                const mode = this.value;
+                trendsChart.data.labels = chartData[mode].labels;
+                trendsChart.data.datasets[0].data = chartData[mode].sales;
+                trendsChart.data.datasets[1].data = chartData[mode].profit;
+                trendsChart.update();
+            });
+        }
+    });
+</script>
+{% endblock %}

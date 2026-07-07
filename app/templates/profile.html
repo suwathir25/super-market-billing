@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block page_header %}My Profile{% endblock %}
+
+{% block content %}
+<div class="row animate-fade-up">
+    <!-- User Info Card -->
+    <div class="col-lg-4">
+        <div class="card text-center">
+            <div class="d-flex justify-content-center my-3">
+                <div class="avatar-circle" style="width: 80px; height: 80px; font-size: 2.2rem; border-radius: 50%;">
+                    {{ user.username[0].upper() }}
+                </div>
+            </div>
+            <h4 class="fw-bold mb-1">{{ user.username }}</h4>
+            <p class="badge bg-primary text-uppercase mb-3">{{ user.role }}</p>
+            <hr>
+            <div class="text-start">
+                <div class="mb-2">
+                    <span class="text-muted small">Registered Email:</span>
+                    <div class="fw-semibold">{{ user.email }}</div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted small">Registered Phone:</span>
+                    <div class="fw-semibold">{{ user.phone if user.phone else 'N/A' }}</div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted small">Status:</span>
+                    <div><span class="badge bg-success">Active</span></div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted small">Member Since:</span>
+                    <div class="fw-semibold small text-muted">{{ user.created_at }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Fields -->
+    <div class="col-lg-8">
+        <!-- Update Info Card -->
+        <div class="card mb-4">
+            <h5 class="fw-bold mb-3" style="color: var(--primary-blue);">Update Profile Details</h5>
+            <form action="{{ url_for('user.profile') }}" method="POST" class="needs-validation" novalidate>
+                <input type="hidden" name="action" value="update_info">
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="email" class="form-label fw-semibold">Email Address</label>
+                        <input type="email" name="email" id="email" class="form-control" value="{{ user.email }}" required>
+                        <div class="invalid-feedback">Please enter a valid email.</div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="phone" class="form-label fw-semibold">Phone Number</label>
+                        <input type="text" name="phone" id="phone" class="form-control" value="{{ user.phone if user.phone else '' }}" required pattern="^\+?[0-9]{10,15}$">
+                        <div class="invalid-feedback">Please enter a valid phone number (10-15 digits).</div>
+                    </div>
+                </div>
+                
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Change Password Card -->
+        <div class="card">
+            <h5 class="fw-bold mb-3" style="color: var(--primary-blue);">Change Password</h5>
+            <form action="{{ url_for('user.profile') }}" method="POST" class="needs-validation" novalidate>
+                <input type="hidden" name="action" value="change_password">
+                
+                <div class="mb-3">
+                    <label for="old_password" class="form-label fw-semibold">Current Password</label>
+                    <input type="password" name="old_password" id="old_password" class="form-control" required>
+                    <div class="invalid-feedback">Please enter your current password.</div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="new_password" class="form-label fw-semibold">New Password</label>
+                        <input type="password" name="new_password" id="new_password" class="form-control" required minlength="6">
+                        <div class="invalid-feedback">Password must be at least 6 characters.</div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="confirm_password" class="form-label fw-semibold">Confirm New Password</label>
+                        <input type="password" name="confirm_password" id="confirm_password" class="form-control" required>
+                        <div class="invalid-feedback">Passwords do not match.</div>
+                    </div>
+                </div>
+                
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

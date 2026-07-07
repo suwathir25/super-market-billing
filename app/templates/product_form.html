@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}{% if product %}Edit Product: {{ product.name }}{% else %}Add Product{% endif %}{% endblock %}
+
+{% block page_header %}{% if product %}Edit Product{% else %}Add Product{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-up">
+    <div class="col-lg-10">
+        <div class="card shadow-sm border-0">
+            <h5 class="fw-bold mb-4" style="color: var(--primary-blue);">
+                {% if product %}Modify Details: {{ product.name }}{% else %}Enter Product Specifications{% endif %}
+            </h5>
+            
+            <form action="{% if product %}{{ url_for('product.edit', product_id=product.id) }}{% else %}{{ url_for('product.add') }}{% endif %}" 
+                  method="POST" 
+                  enctype="multipart/form-data" 
+                  class="needs-validation" 
+                  id="productForm" 
+                  novalidate>
+                  
+                <!-- Row 1: Basic specifications -->
+                <div class="row mb-3">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label fw-semibold">Product Name</label>
+                        <input type="text" name="name" id="name" class="form-control" placeholder="e.g. Organic Cane Sugar" value="{{ product.name if product else '' }}" required minlength="2">
+                        <div class="invalid-feedback">Enter a valid product name (minimum 2 characters).</div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="sku" class="form-label fw-semibold">SKU Code</label>
+                        <input type="text" name="sku" id="sku" class="form-control" placeholder="e.g. SUGAR-ORG-1K" value="{{ product.sku if product else '' }}" required minlength="3">
+                        <div class="invalid-feedback">Enter a valid unique SKU code (minimum 3 characters).</div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label for="barcode" class="form-label fw-semibold">Barcode</label>
+                        <input type="text" name="barcode" id="barcode" class="form-control" placeholder="Scan or enter barcode" value="{{ product.barcode if product else '' }}">
+                        <div class="text-muted small mt-1">Optional. Scanner-compatible.</div>
+                    </div>
+                </div>
+
+                <!-- Row 2: Category and Supplier references -->
+                <div class="row mb-3">
+                    <div class="col-md-4 mb-3">
+                        <label for="category_id" class="form-label fw-semibold">Category Reference</label>
+                        <select name="category_id" id="category_id" class="form-select">
+                            <option value="" selected disabled>Select Category</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.id }}" {% if product and product.category_id|string == cat.id|string %}selected{% endif %}>
+                                    {{ cat.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="text-muted small mt-1">Leave empty if uncategorized.</div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="supplier_id" class="form-label fw-semibold">Supplier Reference</label>
+                        <select name="supplier_id" id="supplier_id" class="form-select">
+                            <option value="" selected disabled>Select Supplier</option>
+                            {% for sup in suppliers %}
+                                <option value="{{ sup.id }}" {% if product and product.supplier_id|string == sup.id|string %}selected{% endif %}>
+                                    {{ sup.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="brand" class="form-label fw-semibold">Brand / Manufacturer</label>
+                        <input type="text" name="brand" id="brand" class="form-control" placeholder="e.g. SweetLife" value="{{ product.brand if product else '' }}">
+                    </div>
+                </div>
+
+                <!-- Row 3: Financial terms and Taxes -->
+                <div class="row mb-3">
+                    <div class="col-md-3 mb-3">
+                        <label for="purchase_price" class="form-label fw-semibold">Purchase Price (Cost)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency }}</span>
+                            <input type="number" step="0.01" name="purchase_price" id="purchase_price" class="form-control" placeholder="0.00" value="{{ product.purchase_price if product else '0.00' }}" required min="0">
+                        </div>
+                        <div class="invalid-feedback">Enter a valid positive cost price.</div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="selling_price" class="form-label fw-semibold">Selling Price</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency }}</span>
+                            <input type="number" step="0.01" name="selling_price" id="selling_price" class="form-control" placeholder="0.00" value="{{ product.selling_price if product else '0.00' }}" required min="0">
+                        </div>
+                        <div class="text-danger small mt-1 d-none" id="price-warning">Selling price cannot be less than purchase price.</div>
+                        <div class="invalid-feedback">Enter a valid positive selling price.</div>
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label for="discount" class="form-label fw-semibold">Default Discount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency }}</span>
+                            <input type="number" step="0.01" name="discount" id="discount" class="form-control" placeholder="0.00" value="{{ product.discount if product else '0.00' }}" min="0">
+                        </div>
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label for="gst_rate" class="form-label fw-semibold">GST Rate (%)</label>
+                        <input type="number" step="0.1" name="gst_rate" id="gst_rate" class="form-control" placeholder="0.0" value="{{ product.gst_rate if product else '0.0' }}" min="0" max="100">
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label for="hsn_code" class="form-label fw-semibold">HSN Code</label>
+                        <input type="text" name="hsn_code" id="hsn_code" class="form-control" placeholder="e.g. 1701" value="{{ product.hsn_code if product else '' }}">
+                    </div>
+                </div>
+
+                <!-- Row 4: Stocks & Expiries -->
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-3">
+                        <label for="stock_quantity" class="form-label fw-semibold">Stock Quantity</label>
+                        <input type="number" name="stock_quantity" id="stock_quantity" class="form-control" placeholder="0" value="{{ product.stock_quantity if product else '0' }}" required min="0">
+                        <div class="invalid-feedback">Enter a valid positive stock number.</div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="min_stock" class="form-label fw-semibold">Min Stock Alert Limit</label>
+                        <input type="number" name="min_stock" id="min_stock" class="form-control" placeholder="5" value="{{ product.min_stock if product else '5' }}" required min="0">
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="expiry_date" class="form-label fw-semibold">Expiry Date</label>
+                        <input type="date" name="expiry_date" id="expiry_date" class="form-control" value="{{ product.expiry_date if product else '' }}">
+                    </div>
+                </div>
+
+                <!-- Row 5: Images & Statuses -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label for="image" class="form-label fw-semibold">Product Image</label>
+                        <input type="file" name="image" id="image" class="form-control" accept="image/*">
+                        {% if product and product.image_path %}
+                            <div class="mt-2 text-muted small">
+                                Current image: <a href="{{ url_for('static', filename=product.image_path) }}" target="_blank">{{ product.image_path }}</a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="status" class="form-label fw-semibold">Status</label>
+                        <select name="status" id="status" class="form-select">
+                            <option value="active" {% if not product or product.status == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if product and product.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Submit / Cancel -->
+                <div class="border-top pt-4 d-flex justify-content-between">
+                    <a href="{{ url_for('product.index') }}" class="btn btn-light px-4" style="border-radius: 12px;">Cancel</a>
+                    <button type="submit" class="btn btn-success px-5" style="border-radius: 12px;" id="submitBtn">
+                        {% if product %}Update Product{% else %}Create Product{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const costInput = document.getElementById('purchase_price');
+        const sellInput = document.getElementById('selling_price');
+        const discountInput = document.getElementById('discount');
+        const priceWarning = document.getElementById('price-warning');
+        const submitBtn = document.getElementById('submitBtn');
+        const form = document.getElementById('productForm');
+
+        function checkPrices() {
+            const cost = parseFloat(costInput.value) || 0;
+            const sell = parseFloat(sellInput.value) || 0;
+            const discount = parseFloat(discountInput.value) || 0;
+
+            let isError = false;
+
+            // Selling price warning
+            if (sell < cost) {
+                priceWarning.classList.remove('d-none');
+                sellInput.classList.add('is-invalid');
+                isError = true;
+            } else {
+                priceWarning.classList.add('d-none');
+                sellInput.classList.remove('is-invalid');
+            }
+
+            // Discount validation
+            if (discount > sell) {
+                discountInput.setCustomValidity("Discount cannot be greater than selling price.");
+                discountInput.classList.add('is-invalid');
+                isError = true;
+            } else {
+                discountInput.setCustomValidity("");
+                discountInput.classList.remove('is-invalid');
+            }
+
+            return !isError;
+        }
+
+        costInput.addEventListener('input', checkPrices);
+        sellInput.addEventListener('input', checkPrices);
+        discountInput.addEventListener('input', checkPrices);
+
+        form.addEventListener('submit', function(e) {
+            if (!checkPrices()) {
+                e.preventDefault();
+                e.stopPropagation();
+                showToast("Please fix price inconsistencies before submitting.", "danger");
+            }
+        });
+    });
+</script>
+{% endblock %}
