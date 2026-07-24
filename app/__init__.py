@@ -8,6 +8,9 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    # Initialize security audit logging
+    config_class.configure_security_logging()
+
     # Initialize Database handlers
     database.init_app(app)
 
@@ -17,12 +20,22 @@ def create_app(config_class=Config):
     from app.views.user_routes import user_bp
     from app.views.category_routes import category_bp
     from app.views.product_routes import product_bp
+    from app.views.customer_routes import customer_bp
+    from app.views.pos_routes import pos_bp
+    from app.views.sales_routes import sales_bp
+    from app.views.reports_routes import reports_bp
+    from app.views.settings_routes import settings_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(user_bp)
     app.register_blueprint(category_bp)
     app.register_blueprint(product_bp)
+    app.register_blueprint(customer_bp)
+    app.register_blueprint(pos_bp)
+    app.register_blueprint(sales_bp)
+    app.register_blueprint(reports_bp)
+    app.register_blueprint(settings_bp)
 
     # Inject store settings globally into all templates
     @app.context_processor
@@ -37,10 +50,15 @@ def create_app(config_class=Config):
             store_name = 'SuperMart'
             currency = '₹'
             
+        user_lang = 'en'
+        if g.get('user'):
+            user_lang = g.user.language or 'en'
+            
         return {
             'store_name': store_name,
             'currency': currency,
-            'current_user': g.get('user', None)
+            'current_user': g.get('user', None),
+            'language': user_lang
         }
 
     # Setup request-bound user global object

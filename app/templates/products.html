@@ -92,16 +92,24 @@
                             <!-- Product Name & Image -->
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="bg-light rounded p-1 d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; overflow: hidden;">
+                                    <!-- Image Thumbnail -->
+                                    <div style="width:56px; height:56px; border-radius:10px; overflow:hidden; flex-shrink:0;
+                                                background: linear-gradient(135deg,#e0eaff,#f0f6ff);
+                                                display:flex; align-items:center; justify-content:center;
+                                                border:1px solid #dbeafe;">
                                         {% if p.image_path %}
-                                            <img src="{{ url_for('static', filename=p.image_path) }}" alt="{{ p.name }}" class="img-fluid rounded" style="max-height: 100%; object-fit: cover;">
+                                            <img src="{{ url_for('static', filename=p.image_path) }}"
+                                                 alt="{{ p.name }}"
+                                                 style="width:100%; height:100%; object-fit:cover;">
                                         {% else %}
-                                            <span style="font-size: 1.5rem;">📦</span>
+                                            <img src="{{ url_for('static', filename='images/placeholder.svg') }}"
+                                                 alt="Placeholder"
+                                                 style="width:100%; height:100%; object-fit:cover; opacity: 0.8;">
                                         {% endif %}
                                     </div>
                                     <div>
-                                        <div class="fw-bold text-dark">{{ p.name }}</div>
-                                        <small class="text-muted">{{ p.brand if p.brand else 'No Brand' }}</small>
+                                        <a href="{{ url_for('product.details', product_id=p.id) }}" class="fw-bold text-dark text-decoration-none hover-primary-link" style="transition: color 0.2s;">{{ p.name }}</a>
+                                        <div><small class="text-muted">{{ p.brand if p.brand else 'No Brand' }}</small></div>
                                     </div>
                                 </div>
                             </td>
@@ -147,6 +155,9 @@
                             <!-- Actions -->
                             <td class="text-end">
                                 <div class="d-inline-flex gap-2">
+                                    <a href="{{ url_for('product.details', product_id=p.id) }}" class="btn btn-sm btn-outline-secondary">
+                                        View
+                                    </a>
                                     <a href="{{ url_for('product.edit', product_id=p.id) }}" class="btn btn-sm btn-outline-primary">
                                         Edit
                                     </a>

@@ -76,6 +76,64 @@ def index():
     currency_data = query_db("SELECT value FROM settings WHERE key = 'currency'", one=True)
     currency = currency_data['value'] if currency_data else '₹'
 
+    # 7. Fetch dynamic sales & profit trends
+    import datetime
+    
+    # Weekly raw trends (last 7 days)
+    weekly_raw = query_db("""
+        SELECT date(b.created_at) as sale_date,
+               SUM(b.total_amount) as total_sales,
+               COALESCE(SUM((bi.selling_price - bi.purchase_price) * bi.quantity - bi.discount_amount), 0) as total_profit
+        FROM bills b
+        LEFT JOIN bill_items bi ON b.id = bi.bill_id
+        WHERE b.status = 'completed' AND b.created_at >= date('now', '-6 days')
+        GROUP BY date(b.created_at)
+    """)
+    
+    # Monthly raw trends (last 6 months)
+    monthly_raw = query_db("""
+        SELECT strftime('%Y-%m', b.created_at) as month_val,
+               SUM(b.total_amount) as total_sales,
+               COALESCE(SUM((bi.selling_price - bi.purchase_price) * bi.quantity - bi.discount_amount), 0) as total_profit
+        FROM bills b
+        LEFT JOIN bill_items bi ON b.id = bi.bill_id
+        WHERE b.status = 'completed' AND b.created_at >= date('now', '-180 days')
+        GROUP BY strftime('%Y-%m', b.created_at)
+    """)
+
+    # Fill weekly datasets (fallback to 0)
+    weekly_labels = []
+    weekly_sales = []
+    weekly_profit = []
+    weekly_map = {row['sale_date']: row for row in weekly_raw} if weekly_raw else {}
+    for i in range(6, -1, -1):
+        day = (datetime.date.today() - datetime.timedelta(days=i)).strftime('%Y-%m-%d')
+        display_day = (datetime.date.today() - datetime.timedelta(days=i)).strftime('%a')
+        weekly_labels.append(display_day)
+        if day in weekly_map:
+            weekly_sales.append(float(weekly_map[day]['total_sales'] or 0))
+            weekly_profit.append(float(weekly_map[day]['total_profit'] or 0))
+        else:
+            weekly_sales.append(0.0)
+            weekly_profit.append(0.0)
+
+    # Fill monthly datasets (fallback to 0)
+    monthly_labels = []
+    monthly_sales = []
+    monthly_profit = []
+    monthly_map = {row['month_val']: row for row in monthly_raw} if monthly_raw else {}
+    for i in range(5, -1, -1):
+        target_date = datetime.date.today() - datetime.timedelta(days=i*30)
+        month_key = target_date.strftime('%Y-%m')
+        display_month = target_date.strftime('%b')
+        monthly_labels.append(display_month)
+        if month_key in monthly_map:
+            monthly_sales.append(float(monthly_map[month_key]['total_sales'] or 0))
+            monthly_profit.append(float(monthly_map[month_key]['total_profit'] or 0))
+        else:
+            monthly_sales.append(0.0)
+            monthly_profit.append(0.0)
+
     # Package dashboard view data
     data = {
         "sales": f"{currency}{total_sales:,.2f}",
@@ -89,7 +147,13 @@ def index():
         "low_stock_items": low_stock_items,
         "top_products": top_products,
         "store_name": store_name,
-        "currency": currency
+        "currency": currency,
+        "weekly_labels": weekly_labels,
+        "weekly_sales": weekly_sales,
+        "weekly_profit": weekly_profit,
+        "monthly_labels": monthly_labels,
+        "monthly_sales": monthly_sales,
+        "monthly_profit": monthly_profit
     }
 
     return render_template('dashboard.html', data=data)

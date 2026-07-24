@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Receipt - {{ bill['bill_number'] }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 30px 15px;
+            background: #f0f4f8;
+            color: #2d3748;
+        }
+        .receipt-container {
+            max-width: 420px;
+            margin: auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            color: #1a365d;
+            margin: 0;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 0.85rem;
+            color: #718096;
+        }
+        .divider {
+            border-top: 2px dashed #e2e8f0;
+            margin: 20px 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+            color: #4a5568;
+        }
+        .info-row strong {
+            color: #1a365d;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th {
+            background: #f7fafc;
+            color: #4a5568;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 8px;
+            text-align: left;
+        }
+        td {
+            padding: 10px 8px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .total-row {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #2d3748;
+        }
+        .grand-total {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a365d;
+            border-top: 2px solid #e2e8f0;
+        }
+        
+        /* Payment Status Success Section */
+        .status-section {
+            text-align: center;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+        .tick-icon {
+            width: 50px;
+            height: 50px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.3);
+        }
+        .status-title {
+            color: #14532d;
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin-bottom: 4px;
+        }
+        .status-subtitle {
+            color: #15803d;
+            font-size: 0.8rem;
+        }
+
+        /* QR Code Scanner Section */
+        .qr-section {
+            text-align: center;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 16px;
+            background: #fff;
+            border: 2px solid #e2e8f0;
+        }
+        .qr-container {
+            position: relative;
+            display: inline-block;
+            background: #fff;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid #edf2f7;
+            margin-bottom: 15px;
+        }
+        .qr-logo-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 44px;
+            height: 44px;
+            background: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+        }
+        .gpay-logo {
+            width: 28px;
+            height: 28px;
+        }
+        
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            margin-top: 15px;
+        }
+        .btn-primary {
+            background: #3182ce;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2b6cb0;
+        }
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #16a34a;
+        }
+        
+        @media print {
+            body { background: white; padding: 0; }
+            .receipt-container { box-shadow: none; padding: 0; }
+            .action-btn, .qr-section, #confirm-payment-btn { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="header">
+            <h1 data-i18n="supermarket_pos">SuperMarket POS</h1>
+            <p data-i18n="high_speed_terminal">High-Speed Checkout Terminal</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="info-row">
+            <span data-i18n="bill_number">Bill No:</span>
+            <strong>{{ bill['bill_number'] }}</strong>
+        </div>
+        <div class="info-row">
+            <span data-i18n="date_label">Date:</span>
+            <strong>{{ bill['created_at'] if bill.get('created_at') else '' }}</strong>
+        </div>
+        <div class="info-row">
+            <span data-i18n="payment_mode_label">Payment Mode:</span>
+            <strong>
+                {% if bill['payment_method'] == 'Card' %}
+                    ATM / Card
+                {% elif bill['payment_method'] in ['NetBanking', 'UPI'] %}
+                    NetBanking
+                {% else %}
+                    {{ bill['payment_method'] }}
+                {% endif %}
+            </strong>
+        </div>
+        <div class="info-row">
+            <span data-i18n="cashier">Cashier:</span>
+            <strong>{{ g.user.username if g.user else 'System' }}</strong>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th data-i18n="product_name">Item</th>
+                    <th data-i18n="qty">Qty</th>
+                    <th data-i18n="price">Price</th>
+                    <th data-i18n="total">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <img src="{{ url_for('static', filename=item['product_image_path'] if item['product_image_path'] else 'images/placeholder.svg') }}" 
+                                 alt="{{ item['product_name'] }}" 
+                                 style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover; border: 1px solid #edf2f7; flex-shrink: 0;" />
+                            <span>{{ item['product_name'] }}</span>
+                        </div>
+                    </td>
+                    <td>{{ item['quantity'] }}</td>
+                    <td>{{ currency }}{{ '{:.2f}'.format(item['selling_price']) }}</td>
+                    <td>{{ currency }}{{ '{:.2f}'.format(item['total_amount']) }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="total-row" style="border-top: 1px solid #cbd5e0;">
+                    <td colspan="3" data-i18n="subtotal">Subtotal</td>
+                    <td>{{ currency }}{{ '{:.2f}'.format(bill['subtotal']) }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="3" data-i18n="tax">Tax</td>
+                    <td>{{ currency }}{{ '{:.2f}'.format(bill['tax_amount']) }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td colspan="3" data-i18n="discount">Discount</td>
+                    <td>-{{ currency }}{{ '{:.2f}'.format(bill['discount_amount']) }}</td>
+                </tr>
+                <tr class="grand-total">
+                    <td colspan="3" data-i18n="grand_total">Grand Total</td>
+                    <td>{{ currency }}{{ '{:.2f}'.format(bill['total_amount']) }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Cash or ATM / Card Payment Success Section (Immediate Tick) -->
+        {% if bill['payment_method'] in ['Cash', 'Card'] %}
+        <div class="status-section">
+            <div class="tick-icon">✓</div>
+            <div class="status-title" data-i18n="payment_successful">Payment Successful</div>
+            <div class="status-subtitle">Received via {% if bill['payment_method'] == 'Card' %}ATM / Card{% else %}Cash{% endif %}</div>
+        </div>
+        <button class="action-btn btn-primary" onclick="window.print()" data-i18n="print_bill">Print Receipt</button>
+        <a href="{{ url_for('pos.index') }}" class="action-btn" style="background:#e2e8f0; color:#4a5568; text-decoration:none;" data-i18n="close_back_pos">✕ Close & Back to POS</a>
+        {% endif %}
+
+        <!-- NetBanking Payment Flow -->
+        {% if bill['payment_method'] in ['NetBanking', 'UPI'] %}
+        <!-- Initially shows QR code -->
+        <div class="qr-section" id="netbanking-qr-area">
+            <h5 style="margin: 0 0 10px 0; font-weight:700; color:#1a365d;" data-i18n="scan_qr_to_pay">Scan QR to Pay</h5>
+            <div class="qr-container">
+                <img src="{{ qr_data_uri }}" alt="Payment QR Code" style="width: 200px; height: 200px; display: block;" />
+                <div class="qr-logo-overlay">
+                    <svg class="gpay-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.5 13.5C14.5 11.57 16.07 10 18 10C19.93 10 21.5 11.57 21.5 13.5V26.5C21.5 28.43 19.93 30 18 30C16.07 30 14.5 28.43 14.5 26.5V13.5Z" fill="#4285F4"/>
+                        <path d="M21.5 13.5C21.5 11.57 23.07 10 25 10C26.93 10 28.5 11.57 28.5 13.5V26.5C28.5 28.43 26.93 30 25 30C23.07 30 21.5 28.43 21.5 26.5V13.5Z" fill="#34A853"/>
+                        <path d="M14.5 26.5C14.5 28.43 12.93 30 11 30C9.07 30 7.5 28.43 7.5 26.5V18.5C7.5 16.57 9.07 15 11 15C12.93 15 14.5 16.57 14.5 18.5V26.5Z" fill="#EA4335"/>
+                        <path d="M28.5 18.5C28.5 16.57 30.07 15 32 15C33.93 15 35.5 16.57 35.5 18.5V26.5C35.5 28.43 33.93 30 32 30C30.07 30 28.5 28.43 28.5 26.5V18.5Z" fill="#FBBC05"/>
+                    </svg>
+                </div>
+            </div>
+            <p style="font-size:0.8rem; color:#718096; margin:0;">Payee: Suwathi (suwathi387@oksbi)</p>
+            <p style="font-size:0.9rem; font-weight:600; color:#2b6cb0; margin:5px 0 0 0;">Amount: {{ currency }}{{ "{:.2f}".format(bill['total_amount']) }}</p>
+            
+            <button class="action-btn btn-success" onclick="completeNetBankingPayment()" data-i18n="scanned_paid_success">✔ Scanned & Paid Successfully</button>
+        </div>
+
+        <!-- Hidden status section for NetBanking success -->
+        <div class="status-section" id="netbanking-success-area" style="display: none;">
+            <div class="tick-icon">✓</div>
+            <div class="status-title" data-i18n="payment_successful">Payment Successful</div>
+            <div class="status-subtitle">Received via UPI / NetBanking</div>
+        </div>
+        
+        <div id="netbanking-success-actions" style="display: none;">
+            <button class="action-btn btn-primary" onclick="window.print()" data-i18n="print_bill">Print Receipt</button>
+            <a href="{{ url_for('pos.index') }}" class="action-btn" style="background:#e2e8f0; color:#4a5568; text-decoration:none; display:block;" data-i18n="close_back_pos">✕ Close & Back to POS</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Multilingual i18n Engine -->
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+    <script>
+        function completeNetBankingPayment() {
+            // Hide QR and show payment success with tick
+            document.getElementById('netbanking-qr-area').style.display = 'none';
+            document.getElementById('netbanking-success-area').style.display = 'block';
+            document.getElementById('netbanking-success-actions').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

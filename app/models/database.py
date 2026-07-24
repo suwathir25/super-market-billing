@@ -80,6 +80,18 @@ def run_migrations(conn):
         conn.execute("ALTER TABLE users ADD COLUMN joining_date DATE;")
     if 'profile_photo' not in user_columns:
         conn.execute("ALTER TABLE users ADD COLUMN profile_photo TEXT;")
+    if 'language' not in user_columns:
+        conn.execute("ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'en';")
+        
+    # Check bills table columns (for payment method split support)
+    cursor.execute("PRAGMA table_info(bills)")
+    bills_columns = [col[1] for col in cursor.fetchall()]
+    if 'cash_amount' not in bills_columns:
+        conn.execute("ALTER TABLE bills ADD COLUMN cash_amount REAL DEFAULT 0.0;")
+    if 'card_amount' not in bills_columns:
+        conn.execute("ALTER TABLE bills ADD COLUMN card_amount REAL DEFAULT 0.0;")
+    if 'net_banking_amount' not in bills_columns:
+        conn.execute("ALTER TABLE bills ADD COLUMN net_banking_amount REAL DEFAULT 0.0;")
         
     # Create held_bills tables
     conn.execute("""
@@ -118,6 +130,19 @@ def run_migrations(conn):
     conn.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('discount_silver', '5');")
     conn.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('discount_gold', '10');")
     conn.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('discount_premium', '15');")
+
+    # Password reset tokens table
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        expires_at TIMESTAMP NOT NULL,
+        used INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    """)
     conn.commit()
 
 def init_db(app):

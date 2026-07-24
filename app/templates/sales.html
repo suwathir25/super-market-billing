@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Sales History{% endblock %}
+{% block page_header %}Sales History{% endblock %}
+
+{% block content %}
+<!-- Summary cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3">
+            <small class="text-muted text-uppercase fw-semibold">Total Bills</small>
+            <h3 class="fw-bold text-primary mb-0">{{ summary.total_count }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3">
+            <small class="text-muted text-uppercase fw-semibold">Total Revenue</small>
+            <h3 class="fw-bold text-success mb-0">{{ currency }}{{ "%.2f"|format(summary.total_revenue) }}</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm p-3">
+            <small class="text-muted text-uppercase fw-semibold">Completed Revenue</small>
+            <h3 class="fw-bold mb-0">{{ currency }}{{ "%.2f"|format(summary.completed_revenue) }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<form action="{{ url_for('sales.index') }}" method="GET" class="row g-2 align-items-end mb-4">
+    <div class="col-md-3">
+        <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="Bill no or customer name…">
+    </div>
+    <div class="col-md-2">
+        <select name="payment" class="form-select">
+            <option value="">All Payments</option>
+            {% for m in ['Cash', 'Card', 'UPI', 'Split'] %}
+            <option value="{{ m }}" {% if payment_filter == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="status" class="form-select">
+            <option value="">All Statuses</option>
+            {% for s in ['completed', 'returned', 'cancelled'] %}
+            <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s|capitalize }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-5 d-flex gap-2">
+        <button class="btn btn-primary px-3">Filter</button>
+        <a href="{{ url_for('sales.index') }}" class="btn btn-outline-secondary px-3">Clear</a>
+        <a href="{{ url_for('sales.export', search=search, payment=payment_filter, status=status_filter) }}" class="btn btn-outline-success ms-auto d-flex align-items-center gap-1">
+            <span>📊</span> Export Excel
+        </a>
+    </div>
+</form>
+
+<!-- Bills Table -->
+<div class="card shadow-sm border-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Bill No</th>
+                    <th>Customer</th>
+                    <th>Cashier</th>
+                    <th>Subtotal</th>
+                    <th>Discount</th>
+                    <th>Tax</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if bills %}
+                    {% for b in bills %}
+                    <tr>
+                        <td class="fw-bold text-primary">{{ b.bill_number }}</td>
+                        <td>{{ b.customer_name }}</td>
+                        <td class="text-muted">{{ b.cashier or '—' }}</td>
+                        <td>{{ currency }}{{ "%.2f"|format(b.subtotal) }}</td>
+                        <td class="text-danger">-{{ currency }}{{ "%.2f"|format(b.discount_amount) }}</td>
+                        <td class="text-warning">+{{ currency }}{{ "%.2f"|format(b.tax_amount) }}</td>
+                        <td class="fw-bold">{{ currency }}{{ "%.2f"|format(b.total_amount) }}</td>
+                        <td>
+                            <span class="badge
+                                {% if b.payment_method == 'Cash' %}bg-success
+                                {% elif b.payment_method == 'Card' %}bg-primary
+                                {% elif b.payment_method == 'UPI' %}bg-info text-dark
+                                {% else %}bg-secondary{% endif %}">
+                                {{ b.payment_method }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge
+                                {% if b.status == 'completed' %}bg-success
+                                {% elif b.status == 'cancelled' %}bg-danger
+                                {% else %}bg-warning text-dark{% endif %}">
+                                {{ b.status|capitalize }}
+                            </span>
+                        </td>
+                        <td class="text-muted small">{{ b.created_at[:16] if b.created_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center py-5 text-muted">
+                        <span style="font-size:2.5rem;">📋</span><br>No sales records found.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if page == 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('sales.index', page=page-1, search=search, payment=payment_filter, status=status_filter) }}">Previous</a>
+        </li>
+        {% for p in range(1, total_pages + 1) %}
+        <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('sales.index', page=p, search=search, payment=payment_filter, status=status_filter) }}">{{ p }}</a>
+        </li>
+        {% endfor %}
+        <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('sales.index', page=page+1, search=search, payment=payment_filter, status=status_filter) }}">Next</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

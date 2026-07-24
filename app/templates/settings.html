@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+{% block page_header %}<span data-i18n="settings">Settings</span>{% endblock %}
+
+{% block content %}
+<form action="{{ url_for('settings.index') }}" method="POST">
+<div class="row g-4">
+    <!-- Store Info -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="fw-bold mb-4" data-i18n="store_information">🏪 Store Information</h5>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" data-i18n="store_name_label">Store Name</label>
+                <input type="text" name="store_name" class="form-control" value="{{ settings.get('store_name', '') }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" data-i18n="gst_number_label">GST Number</label>
+                <input type="text" name="gst_number" class="form-control" value="{{ settings.get('gst_number', '') }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" data-i18n="address_label">Address</label>
+                <textarea name="address" class="form-control" rows="3">{{ settings.get('address', '') }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" data-i18n="currency_symbol">Currency</label>
+                <select name="currency" class="form-select">
+                    <option value="₹" {% if settings.get('currency', '₹') == '₹' %}selected{% endif %}>INR (₹)</option>
+                    <option value="$" {% if settings.get('currency') == '$' %}selected{% endif %}>USD ($)</option>
+                    <option value="€" {% if settings.get('currency') == '€' %}selected{% endif %}>EUR (€)</option>
+                    <option value="£" {% if settings.get('currency') == '£' %}selected{% endif %}>GBP (£)</option>
+                    <option value="د.إ" {% if settings.get('currency') == 'د.إ' %}selected{% endif %}>AED (د.إ)</option>
+                    <option value="﷼" {% if settings.get('currency') == '﷼' %}selected{% endif %}>SAR (﷼)</option>
+                    <option value="S$" {% if settings.get('currency') == 'S$' %}selected{% endif %}>SGD (S$)</option>
+                    <option value="RM" {% if settings.get('currency') == 'RM' %}selected{% endif %}>MYR (RM)</option>
+                    <option value="¥" {% if settings.get('currency') == '¥' %}selected{% endif %}>JPY (¥)</option>
+                    <option value="C$" {% if settings.get('currency') == 'C$' %}selected{% endif %}>CAD (C$)</option>
+                    <option value="A$" {% if settings.get('currency') == 'A$' %}selected{% endif %}>AUD (A$)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tax & Payment -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="fw-bold mb-4" data-i18n="tax_payment_settings">💳 Tax & Payment Settings</h5>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" data-i18n="default_tax_rate">Default Tax Rate (%)</label>
+                <input type="number" name="tax_rate" class="form-control" value="{{ settings.get('tax_rate', '18') }}" min="0" max="100">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">UPI ID</label>
+                <input type="text" name="upi_id" class="form-control" value="{{ settings.get('upi_id', '') }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" data-i18n="merchant_name_label">Merchant Name</label>
+                <input type="text" name="merchant_name" class="form-control" value="{{ settings.get('merchant_name', '') }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" data-i18n="merchant_phone_label">Merchant Phone</label>
+                <input type="text" name="merchant_number" class="form-control" value="{{ settings.get('merchant_number', '') }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold" data-i18n="printer_type_label">Printer Type</label>
+                <select name="printer_type" class="form-select">
+                    {% for pt in ['thermal', 'inkjet', 'laser'] %}
+                    <option value="{{ pt }}" {% if settings.get('printer_type') == pt %}selected{% endif %}>{{ pt|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Membership Discounts -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm p-4">
+            <h5 class="fw-bold mb-4" data-i18n="membership_discounts">⭐ Membership Discount Rates (%)</h5>
+            <div class="row g-3">
+                {% for tier in ['normal', 'silver', 'gold', 'premium'] %}
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">{{ tier|capitalize }}</label>
+                    <input type="number" name="discount_{{ tier }}" class="form-control"
+                           value="{{ settings.get('discount_' + tier, '0') }}" min="0" max="100">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Email Configuration & SMTP Diagnostics ─────────────────── -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm p-4" style="border-left:4px solid #2563eb !important;">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+          <div>
+            <h5 class="fw-bold mb-1">📧 Email Configuration <span class="badge bg-primary ms-2" style="font-size:11px;">Password Reset</span></h5>
+            <p class="text-muted small mb-0">Gmail SMTP — used to send password-reset links.</p>
+          </div>
+          <span id="smtpStatusBadge" class="badge rounded-pill px-3 py-2" style="font-size:12px;background:#f1f5f9;color:#64748b;">⏳ checking…</span>
+        </div>
+
+        <!-- Gmail App Password quick-setup guide -->
+        <div class="p-3 mb-4 rounded-3" style="background:#eff6ff;border:1px solid #bfdbfe;">
+          <p class="fw-semibold mb-2" style="color:#1e3a8a;font-size:13px;">🚀 Gmail Quick Setup (3 steps)</p>
+          <ol class="mb-0 small" style="color:#1e40af;line-height:1.9;padding-left:18px;">
+            <li>Enable <strong>2-Step Verification</strong> on your Google Account
+                (<a href="https://myaccount.google.com/signinoptions/twosv" target="_blank" style="color:#2563eb;">myaccount.google.com → Security</a>).</li>
+            <li>Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#2563eb;font-weight:600;">App Passwords</a>, choose <em>Mail → Other</em>, click <strong>Generate</strong>.</li>
+            <li>Copy the <strong>16-character code</strong> into the <em>App Password</em> field below, then click <em>Save Settings</em>.</li>
+          </ol>
+        </div>
+
+        <!-- SMTP fields -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">SMTP Server</label>
+            <input type="text" name="mail_server" class="form-control" style="border-radius:8px;"
+                   value="{{ settings.get('mail_server', 'smtp.gmail.com') }}" placeholder="smtp.gmail.com">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Port</label>
+            <input type="number" name="mail_port" class="form-control" style="border-radius:8px;"
+                   value="{{ settings.get('mail_port', '587') }}" placeholder="587">
+            <div class="form-text" style="font-size:10px;">587 = STARTTLS &nbsp;·&nbsp; 465 = SSL</div>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">Sender Display Name</label>
+            <input type="text" name="mail_sender_name" class="form-control" style="border-radius:8px;"
+                   value="{{ settings.get('mail_sender_name', 'SuperMart') }}" placeholder="SuperMart">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Gmail Address <span class="text-muted fw-normal">(sender)</span></label>
+            <input type="email" name="mail_username" class="form-control" style="border-radius:8px;"
+                   value="{{ settings.get('mail_username', '') }}" placeholder="yourshop@gmail.com" autocomplete="off">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">App Password
+              <span class="fw-normal small ms-1" style="color:{% if settings.get('mail_password') %}#16a34a{% else %}#ef4444{% endif %};">
+                {% if settings.get('mail_password') %}✅ saved — leave blank to keep{% else %}⚠ not set{% endif %}
+              </span>
+            </label>
+            <div class="input-group">
+              <input type="password" name="mail_password" id="mailPasswordInput" class="form-control"
+                     style="border-radius:8px 0 0 8px;"
+                     placeholder="{% if settings.get('mail_password') %}••••••••••••••••{% else %}Paste 16-char App Password{% endif %}"
+                     autocomplete="new-password">
+              <button class="btn btn-outline-secondary" type="button" id="toggleMailPw" title="Show/hide">👁</button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Reset Link Expiry <span class="text-muted fw-normal">(minutes)</span></label>
+            <input type="number" name="reset_token_expiry_minutes" class="form-control" style="border-radius:8px;"
+                   value="{{ settings.get('reset_token_expiry_minutes', '15') }}" min="5" max="1440" placeholder="15">
+          </div>
+        </div>
+
+        <!-- Action bar -->
+        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+          <button type="button" id="btnDiagnose" class="btn btn-outline-secondary btn-sm px-3" style="border-radius:8px;">
+            <span class="btn-d-text">🔬 Run SMTP Diagnostic</span>
+            <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
+          </button>
+          <div class="input-group" style="max-width:340px;">
+            <input type="email" id="testEmailTo" class="form-control form-control-sm"
+                   style="border-radius:8px 0 0 8px;" placeholder="recipient@gmail.com (test inbox)">
+            <button type="button" id="btnTestEmail" class="btn btn-outline-primary btn-sm px-3" style="border-radius:0 8px 8px 0;">
+              <span class="btn-t-text">📨 Send Test</span>
+              <span class="spinner-border spinner-border-sm ms-1 d-none" role="status"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Diagnostic results -->
+        <div id="diagPanel" class="d-none">
+          <hr class="my-3">
+          <p class="fw-semibold mb-2 small text-muted" id="diagHeading"></p>
+          <div id="diagSteps"></div>
+        </div>
+
+        <!-- Test email result -->
+        <div id="testEmailResult" class="d-none mt-2"></div>
+
+      </div>
+    </div>
+</div>
+
+<div class="mt-4">
+  <button type="submit" class="btn btn-success px-5 fw-bold" style="border-radius:10px;" data-i18n="save_settings">
+    💾 Save Settings
+  </button>
+</div>
+</form>
+
+<script>
+(function () {
+  'use strict';
+
+  // Eye toggle
+  document.getElementById('toggleMailPw').addEventListener('click', function () {
+    var inp = document.getElementById('mailPasswordInput');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    this.textContent = inp.type === 'password' ? '👁' : '🙈';
+  });
+
+  // Auto-check status badge on page load
+  async function refreshBadge() {
+    var badge = document.getElementById('smtpStatusBadge');
+    try {
+      var res  = await fetch('{{ url_for("settings.smtp_diagnose") }}', { method: 'POST' });
+      var data = await res.json();
+      if (data.overall) {
+        badge.style.background = '#f0fdf4'; badge.style.color = '#16a34a';
+        badge.textContent = '✅ SMTP Connected';
+      } else {
+        badge.style.background = '#fef2f2'; badge.style.color = '#dc2626';
+        var fail = (data.steps || []).find(function(s){ return !s.ok; });
+        badge.textContent = '❌ ' + (fail ? fail.name : 'Not configured');
+      }
+    } catch(e) {
+      badge.style.background = '#fef3c7'; badge.style.color = '#92400e';
+      badge.textContent = '⚠ Cannot check';
+    }
+  }
+  refreshBadge();
+
+  // Diagnose button
+  document.getElementById('btnDiagnose').addEventListener('click', async function () {
+    var btn = this, spinner = btn.querySelector('.spinner-border'), btnText = btn.querySelector('.btn-d-text');
+    var panel = document.getElementById('diagPanel');
+    var heading = document.getElementById('diagHeading');
+    var stepsDiv = document.getElementById('diagSteps');
+
+    spinner.classList.remove('d-none'); btnText.textContent = 'Testing…'; btn.disabled = true;
+    panel.classList.remove('d-none');
+    stepsDiv.innerHTML = '<p class="text-muted small">Running checks…</p>';
+
+    try {
+      var res  = await fetch('{{ url_for("settings.smtp_diagnose") }}', { method: 'POST' });
+      var data = await res.json();
+      var cfg  = data.config || {};
+      heading.textContent = 'Server: ' + cfg.server + ':' + cfg.port + ' · ' + cfg.mode + ' · User: ' + cfg.username;
+
+      stepsDiv.innerHTML = '';
+      (data.steps || []).forEach(function(step) {
+        var row = document.createElement('div');
+        row.className = 'd-flex align-items-start gap-2 mb-2 small';
+        row.innerHTML =
+          '<span>' + (step.ok ? '✅' : '❌') + '</span>' +
+          '<span><strong class="' + (step.ok ? 'text-success' : 'text-danger') + '">' + step.name + '</strong>' +
+          '<br><span class="text-muted" style="font-size:11px;">' + (step.detail || '') + '</span></span>';
+        stepsDiv.appendChild(row);
+      });
+
+      var summary = document.createElement('div');
+      summary.className = 'mt-3 p-3 rounded-2 small fw-semibold border-0 alert ' +
+                          (data.overall ? 'alert-success' : 'alert-danger');
+      summary.textContent = data.overall
+        ? '✅ All checks passed — Gmail SMTP is working correctly!'
+        : '❌ SMTP check failed. Fix the highlighted issue, Save Settings, then re-run.';
+      stepsDiv.appendChild(summary);
+
+    } catch(e) {
+      stepsDiv.innerHTML = '<p class="text-danger small">Network error. Is the server running?</p>';
+    } finally {
+      spinner.classList.add('d-none'); btnText.textContent = '🔬 Run SMTP Diagnostic'; btn.disabled = false;
+      refreshBadge();
+    }
+  });
+
+  // Test email button
+  document.getElementById('btnTestEmail').addEventListener('click', async function () {
+    var btn = this, spinner = btn.querySelector('.spinner-border'), btnText = btn.querySelector('.btn-t-text');
+    var result  = document.getElementById('testEmailResult');
+    var toInput = document.getElementById('testEmailTo');
+    var to      = toInput.value.trim();
+
+    if (!to) { toInput.classList.add('is-invalid'); toInput.focus(); return; }
+    toInput.classList.remove('is-invalid');
+
+    spinner.classList.remove('d-none'); btnText.textContent = 'Sending…'; btn.disabled = true;
+    result.classList.add('d-none');
+
+    try {
+      var res  = await fetch('{{ url_for("settings.test_email") }}', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ to: to })
+      });
+      var data = await res.json();
+      result.className = 'mt-2 p-3 rounded-2 small border-0 alert ' + (data.success ? 'alert-success' : 'alert-danger');
+      result.textContent = data.message;
+      result.classList.remove('d-none');
+    } catch(e) {
+      result.className = 'mt-2 p-3 rounded-2 small border-0 alert alert-danger';
+      result.textContent = 'Network error.';
+      result.classList.remove('d-none');
+    } finally {
+      spinner.classList.add('d-none'); btnText.textContent = '📨 Send Test'; btn.disabled = false;
+    }
+  });
+
+})();
+</script>
+{% endblock %}
+

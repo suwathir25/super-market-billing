@@ -137,7 +137,7 @@ def api_search():
 
     # Matches exact barcode first, then partial matching by name or SKU
     sql = """
-        SELECT id, name, sku, barcode, purchase_price, selling_price, discount, gst_rate, stock_quantity 
+        SELECT id, name, sku, barcode, purchase_price, selling_price, discount, gst_rate, stock_quantity, image_path 
         FROM products 
         WHERE status = 'active' AND (barcode = ? OR name LIKE ? OR sku LIKE ?)
         LIMIT 10
@@ -154,6 +154,16 @@ def api_search():
             'selling_price': r['selling_price'],
             'discount': r['discount'],
             'gst_rate': r['gst_rate'],
-            'stock_quantity': r['stock_quantity']
+            'stock_quantity': r['stock_quantity'],
+            'image_path': r['image_path'] or ''
         })
     return jsonify(results)
+
+@product_bp.route('/products/details/<int:product_id>', methods=['GET'])
+@login_required
+def details(product_id):
+    product = Product.get_by_id(product_id)
+    if not product:
+        flash("Product not found.", "danger")
+        return redirect(url_for('product.index'))
+    return render_template('product_details.html', product=product)

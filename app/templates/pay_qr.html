@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}UPI Payment - {{ bill['bill_number'] }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .payment-container {
+        max-width: 500px;
+        margin: 40px auto;
+    }
+    .payment-card {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        border: none;
+        overflow: hidden;
+    }
+    .payment-header {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        color: white;
+        padding: 30px 20px;
+        text-align: center;
+    }
+    .amount-display {
+        font-size: 2.8rem;
+        font-weight: 800;
+        margin: 10px 0;
+        letter-spacing: -1px;
+    }
+    .qr-box {
+        position: relative;
+        display: inline-block;
+        background: #ffffff;
+        padding: 15px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 2px solid #eef2f7;
+    }
+    .qr-logo-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 50px;
+        height: 50px;
+        background: #ffffff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e2e8f0;
+    }
+    .gpay-logo {
+        width: 32px;
+        height: 32px;
+    }
+    .payment-instruction {
+        font-size: 0.95rem;
+        color: #4a5568;
+        line-height: 1.5;
+    }
+    .btn-confirm {
+        background-color: #2e7d32;
+        color: white;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    .btn-confirm:hover {
+        background-color: #1b5e20;
+        color: white;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="payment-container">
+        <div class="card payment-card">
+            <div class="payment-header">
+                <span class="badge bg-light text-primary mb-2 fw-semibold px-3 py-2">GOOGLE PAY / UPI</span>
+                <h5 class="mb-1 opacity-75">Transaction Amount</h5>
+                <div class="amount-display">{{ currency }}{{ "{:.2f}".format(bill['total_amount']) }}</div>
+                <p class="mb-0 opacity-75 small">Bill Reference: <strong>{{ bill['bill_number'] }}</strong></p>
+            </div>
+            
+            <div class="card-body text-center p-4">
+                <div class="mb-4">
+                    <div class="qr-box">
+                        <img src="{{ qr_data_uri }}" alt="Payment QR Code" style="width: 240px; height: 240px; display: block;" />
+                        <div class="qr-logo-overlay">
+                            <!-- SVG for modern GPay two overlapping U-loops logo -->
+                            <svg class="gpay-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M14.5 13.5C14.5 11.57 16.07 10 18 10C19.93 10 21.5 11.57 21.5 13.5V26.5C21.5 28.43 19.93 30 18 30C16.07 30 14.5 28.43 14.5 26.5V13.5Z" fill="#4285F4"/>
+                                <path d="M21.5 13.5C21.5 11.57 23.07 10 25 10C26.93 10 28.5 11.57 28.5 13.5V26.5C28.5 28.43 26.93 30 25 30C23.07 30 21.5 28.43 21.5 26.5V13.5Z" fill="#34A853"/>
+                                <path d="M14.5 26.5C14.5 28.43 12.93 30 11 30C9.07 30 7.5 28.43 7.5 26.5V18.5C7.5 16.57 9.07 15 11 15C12.93 15 14.5 16.57 14.5 18.5V26.5Z" fill="#EA4335"/>
+                                <path d="M28.5 18.5C28.5 16.57 30.07 15 32 15C33.93 15 35.5 16.57 35.5 18.5V26.5C35.5 28.43 33.93 30 32 30C30.07 30 28.5 28.43 28.5 26.5V18.5Z" fill="#FBBC05"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-instruction mb-4">
+                    <p class="mb-1 fw-semibold">Scan QR using Google Pay or any UPI App</p>
+                    <p class="text-muted small mb-0">It will automatically pre-fill the exact amount of <strong>{{ currency }}{{ "{:.2f}".format(bill['total_amount']) }}</strong></p>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('pos.receipt', bill_id=bill['id']) }}" class="btn btn-confirm py-3 btn-lg rounded-3">
+                        ✔ Confirm Payment & Print Bill
+                    </a>
+                    <a href="{{ url_for('pos.index') }}" class="btn btn-outline-secondary py-2 btn-sm rounded-3 border-0">
+                        ✕ Cancel Payment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

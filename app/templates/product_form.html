@@ -9,7 +9,7 @@
     <div class="col-lg-10">
         <div class="card shadow-sm border-0">
             <h5 class="fw-bold mb-4" style="color: var(--primary-blue);">
-                {% if product %}Modify Details: {{ product.name }}{% else %}Enter Product Specifications{% endif %}
+                {% if product %}✏️ Modify Details: {{ product.name }}{% else %}➕ Enter Product Specifications{% endif %}
             </h5>
             
             <form action="{% if product %}{{ url_for('product.edit', product_id=product.id) }}{% else %}{{ url_for('product.add') }}{% endif %}" 
@@ -132,16 +132,52 @@
                     </div>
                 </div>
 
-                <!-- Row 5: Images & Statuses -->
+                <!-- Row 5: Image Upload & Status -->
                 <div class="row mb-4">
+                    <!-- Drag & Drop Image Uploader -->
                     <div class="col-md-6 mb-3">
-                        <label for="image" class="form-label fw-semibold">Product Image</label>
-                        <input type="file" name="image" id="image" class="form-control" accept="image/*">
-                        {% if product and product.image_path %}
-                            <div class="mt-2 text-muted small">
-                                Current image: <a href="{{ url_for('static', filename=product.image_path) }}" target="_blank">{{ product.image_path }}</a>
+                        <label class="form-label fw-semibold">Product Image</label>
+
+                        <!-- Drop Zone -->
+                        <div id="drop-zone" onclick="document.getElementById('image').click()"
+                             style="border: 2px dashed #2563eb; border-radius: 14px; padding: 20px;
+                                    cursor: pointer; background: #f0f6ff; transition: all 0.2s;
+                                    min-height: 160px; display: flex; flex-direction: column;
+                                    align-items: center; justify-content: center; gap: 8px;">
+
+                            <!-- Preview Image -->
+                            {% if product and product.image_path %}
+                            <img id="img-preview"
+                                 src="{{ url_for('static', filename=product.image_path) }}"
+                                 alt="Current Image"
+                                 style="max-height:120px; max-width:100%; border-radius:10px;
+                                        object-fit:cover; display:block;">
+                            {% else %}
+                            <img id="img-preview" src="" alt=""
+                                 style="max-height:120px; max-width:100%; border-radius:10px;
+                                        object-fit:cover; display:none;">
+                            {% endif %}
+
+                            <!-- Placeholder icon shown when no image -->
+                            <div id="drop-placeholder" {% if product and product.image_path %}style="display:none;"{% endif %}>
+                                <div style="font-size:2.5rem; text-align:center;">🖼️</div>
+                                <div class="text-primary fw-semibold small text-center">Click or drag & drop image here</div>
+                                <div class="text-muted" style="font-size:0.78rem; text-align:center;">PNG, JPG, WEBP · Max 5 MB</div>
                             </div>
-                        {% endif %}
+                        </div>
+
+                        <!-- Hidden real file input -->
+                        <input type="file" name="image" id="image" accept="image/png,image/jpeg,image/webp" style="display:none;">
+
+                        <!-- Hidden delete image tracker -->
+                        <input type="hidden" name="delete_image" id="delete_image" value="0">
+
+                        <!-- File name + remove button shown after selection -->
+                        <div id="file-info" class="mt-2 d-flex align-items-center gap-2" {% if product and product.image_path %}{% else %}style="display:none !important;"{% endif %}>
+                            <span id="file-name" class="text-muted small text-truncate" style="max-width:200px;">{% if product and product.image_path %}Current Image{% endif %}</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="clearImage()" style="border-radius:8px;">✕ Remove</button>
+                        </div>
+                        <div id="img-error" class="text-danger small mt-1" style="display:none;">File too large! Maximum allowed size is 5 MB.</div>
                     </div>
 
                     <div class="col-md-6 mb-3">
@@ -169,6 +205,7 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // --- Price validation ---
         const costInput = document.getElementById('purchase_price');
         const sellInput = document.getElementById('selling_price');
         const discountInput = document.getElementById('discount');
@@ -180,10 +217,7 @@
             const cost = parseFloat(costInput.value) || 0;
             const sell = parseFloat(sellInput.value) || 0;
             const discount = parseFloat(discountInput.value) || 0;
-
             let isError = false;
-
-            // Selling price warning
             if (sell < cost) {
                 priceWarning.classList.remove('d-none');
                 sellInput.classList.add('is-invalid');
@@ -192,8 +226,6 @@
                 priceWarning.classList.add('d-none');
                 sellInput.classList.remove('is-invalid');
             }
-
-            // Discount validation
             if (discount > sell) {
                 discountInput.setCustomValidity("Discount cannot be greater than selling price.");
                 discountInput.classList.add('is-invalid');
@@ -202,21 +234,86 @@
                 discountInput.setCustomValidity("");
                 discountInput.classList.remove('is-invalid');
             }
-
             return !isError;
         }
-
         costInput.addEventListener('input', checkPrices);
         sellInput.addEventListener('input', checkPrices);
         discountInput.addEventListener('input', checkPrices);
-
         form.addEventListener('submit', function(e) {
             if (!checkPrices()) {
                 e.preventDefault();
                 e.stopPropagation();
-                showToast("Please fix price inconsistencies before submitting.", "danger");
+            }
+        });
+
+        // --- Image uploader ---
+        const fileInput  = document.getElementById('image');
+        const dropZone   = document.getElementById('drop-zone');
+        const preview    = document.getElementById('img-preview');
+        const placeholder = document.getElementById('drop-placeholder');
+        const fileInfo   = document.getElementById('file-info');
+        const fileName   = document.getElementById('file-name');
+        const imgError   = document.getElementById('img-error');
+        const MAX_SIZE   = 5 * 1024 * 1024; // 5 MB
+
+        function loadFile(file) {
+            if (!file) return;
+            imgError.style.display = 'none';
+            if (file.size > MAX_SIZE) {
+                imgError.style.display = 'block';
+                fileInput.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = e => {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+                fileInfo.style.display = 'flex';
+                fileName.textContent = file.name;
+                document.getElementById('delete_image').value = '0';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        fileInput.addEventListener('change', () => loadFile(fileInput.files[0]));
+
+        // Drag & drop events
+        dropZone.addEventListener('dragover', e => {
+            e.preventDefault();
+            dropZone.style.background = '#dbeafe';
+            dropZone.style.borderColor = '#1d4ed8';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.background = '#f0f6ff';
+            dropZone.style.borderColor = '#2563eb';
+        });
+        dropZone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropZone.style.background = '#f0f6ff';
+            dropZone.style.borderColor = '#2563eb';
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                // Assign to real input via DataTransfer
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                loadFile(file);
             }
         });
     });
+
+    function clearImage() {
+        const fileInput  = document.getElementById('image');
+        const preview    = document.getElementById('img-preview');
+        const placeholder = document.getElementById('drop-placeholder');
+        const fileInfo   = document.getElementById('file-info');
+        fileInput.value  = '';
+        preview.src      = '';
+        preview.style.display  = 'none';
+        placeholder.style.display = 'flex';
+        fileInfo.style.display = 'none';
+        document.getElementById('delete_image').value = '1';
+    }
 </script>
 {% endblock %}

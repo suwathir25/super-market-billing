@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Reports{% endblock %}
+{% block page_header %}Business Reports{% endblock %}
+
+{% block content %}
+<!-- Summary cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <small class="text-muted text-uppercase fw-semibold">Total Revenue</small>
+            <h3 class="fw-bold text-primary mb-0">{{ currency }}{{ "%.2f"|format(summary.total_revenue) }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <small class="text-muted text-uppercase fw-semibold">Gross Profit</small>
+            <h3 class="fw-bold text-success mb-0">{{ currency }}{{ "%.2f"|format(gross_profit) }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <small class="text-muted text-uppercase fw-semibold">Total Bills</small>
+            <h3 class="fw-bold mb-0">{{ summary.total_bills }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm p-3">
+            <small class="text-muted text-uppercase fw-semibold">Total Tax Collected</small>
+            <h3 class="fw-bold text-warning mb-0">{{ currency }}{{ "%.2f"|format(summary.total_tax) }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Payment Breakdown -->
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm p-3 h-100">
+            <h5 class="fw-bold mb-3">💳 Payment Breakdown</h5>
+            {% if payment_breakdown %}
+            <table class="table table-sm align-middle">
+                <thead class="table-light">
+                    <tr><th>Method</th><th>Bills</th><th>Revenue</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in payment_breakdown %}
+                    <tr>
+                        <td><span class="badge
+                            {% if row.payment_method == 'Cash' %}bg-success
+                            {% elif row.payment_method == 'Card' %}bg-primary
+                            {% elif row.payment_method == 'UPI' %}bg-info text-dark
+                            {% else %}bg-secondary{% endif %}">{{ row.payment_method }}</span></td>
+                        <td>{{ row.count }}</td>
+                        <td class="fw-bold">{{ currency }}{{ "%.2f"|format(row.total) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">No data available.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Category Revenue -->
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm p-3 h-100">
+            <h5 class="fw-bold mb-3">📁 Revenue by Category</h5>
+            {% if category_revenue %}
+            <table class="table table-sm align-middle">
+                <thead class="table-light">
+                    <tr><th>Category</th><th>Revenue</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in category_revenue %}
+                    <tr>
+                        <td>{{ row.category }}</td>
+                        <td class="fw-bold">{{ currency }}{{ "%.2f"|format(row.revenue) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted">No data available.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-3">
+            <h5 class="fw-bold mb-3">⭐ Top 10 Products by Revenue</h5>
+            {% if top_products %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead class="table-light">
+                        <tr><th>#</th><th>Product</th><th>Units</th><th>Revenue</th><th>Profit</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for p in top_products %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td class="fw-semibold">{{ p.name }}</td>
+                            <td>{{ p.units_sold }}</td>
+                            <td>{{ currency }}{{ "%.2f"|format(p.revenue) }}</td>
+                            <td class="text-success fw-bold">{{ currency }}{{ "%.2f"|format(p.profit) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No sales data yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Low Stock Report -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-3">
+            <h5 class="fw-bold mb-3 text-danger">⚠ Low Stock Report</h5>
+            {% if low_stock %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead class="table-light">
+                        <tr><th>Product</th><th>SKU</th><th>Category</th><th>Stock</th><th>Min</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for p in low_stock %}
+                        <tr class="{% if p.stock_quantity == 0 %}table-danger{% else %}table-warning{% endif %}">
+                            <td class="fw-semibold">{{ p.name }}</td>
+                            <td class="text-muted small">{{ p.sku }}</td>
+                            <td>{{ p.category or '—' }}</td>
+                            <td class="fw-bold text-danger">{{ p.stock_quantity }}</td>
+                            <td>{{ p.min_stock }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-success">✔ All products are sufficiently stocked.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Top Customers -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm p-3">
+            <h5 class="fw-bold mb-3">👥 Top Customers by Spending</h5>
+            {% if top_customers %}
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead class="table-light">
+                        <tr><th>#</th><th>Name</th><th>Phone</th><th>Membership</th><th>Orders</th><th>Total Spent</th><th>Loyalty Pts</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in top_customers %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td class="fw-semibold">{{ c.name }}</td>
+                            <td>{{ c.phone }}</td>
+                            <td><span class="badge
+                                {% if c.membership_type == 'Premium' %}bg-warning text-dark
+                                {% elif c.membership_type == 'Gold' %}bg-success
+                                {% elif c.membership_type == 'Silver' %}bg-secondary
+                                {% else %}bg-light text-dark border{% endif %}">{{ c.membership_type }}</span></td>
+                            <td>{{ c.total_orders }}</td>
+                            <td class="fw-bold">{{ currency }}{{ "%.2f"|format(c.total_spent) }}</td>
+                            <td>⭐ {{ c.loyalty_points }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No customer data yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name TEXT,
     joining_date DATE,
     profile_photo TEXT,
+    language TEXT DEFAULT 'en',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -87,10 +88,10 @@ CREATE TABLE IF NOT EXISTS bills (
     discount_amount REAL DEFAULT 0.0,
     tax_amount REAL DEFAULT 0.0,
     total_amount REAL NOT NULL,
-    payment_method TEXT CHECK(payment_method IN ('Cash', 'Card', 'UPI', 'Split')) NOT NULL,
+    payment_method TEXT CHECK(payment_method IN ('Cash', 'Card', 'NetBanking', 'Split')) NOT NULL,
     cash_amount REAL DEFAULT 0.0,
     card_amount REAL DEFAULT 0.0,
-    upi_amount REAL DEFAULT 0.0,
+    net_banking_amount REAL DEFAULT 0.0,
     status TEXT CHECK(status IN ('completed', 'returned', 'cancelled')) DEFAULT 'completed',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,

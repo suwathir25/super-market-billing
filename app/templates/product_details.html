@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Product Details: {{ product.name }}{% endblock %}
+
+{% block page_header %}Product Details{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade-up">
+    <div class="col-lg-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{{ url_for('product.index') }}" class="btn btn-light px-4" style="border-radius: 12px;">
+                ← Back to Catalog
+            </a>
+            <div>
+                <a href="{{ url_for('product.edit', product_id=product.id) }}" class="btn btn-primary px-4 me-2" style="border-radius: 12px;">
+                    ✏️ Edit Product
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 overflow-hidden">
+            <div class="row g-0">
+                <!-- Product Image Area -->
+                <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-4" 
+                     style="min-height: 320px; border-right: 1px solid #edf2f7;">
+                    <div style="width: 100%; max-width: 320px; aspect-ratio: 1; border-radius: 16px; overflow: hidden;
+                                background: linear-gradient(135deg, #f8fafc, #edf2f7);
+                                display: flex; align-items: center; justify-content: center;
+                                border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        {% if product.image_path %}
+                            <img src="{{ url_for('static', filename=product.image_path) }}" 
+                                 alt="{{ product.name }}" 
+                                 style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/placeholder.svg') }}" 
+                                 alt="Placeholder" 
+                                 style="width: 100%; height: 100%; object-fit: cover; opacity: 0.85;">
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Product Information Details -->
+                <div class="col-md-7 p-4 p-md-5">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="badge {% if product.status == 'active' %}bg-success{% else %}bg-secondary{% endif %}" style="font-size: 0.8rem; border-radius: 8px;">
+                            {{ product.status|upper }}
+                        </span>
+                        {% if product.category_name %}
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size: 0.8rem; border-radius: 8px;">
+                            {{ product.category_name }}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <h2 class="fw-bold mb-1 text-dark">{{ product.name }}</h2>
+                    <p class="text-muted mb-4">{{ product.brand if product.brand else 'No brand details specified' }}</p>
+
+                    <div class="row g-4 mb-4">
+                        <!-- Prices info -->
+                        <div class="col-sm-6">
+                            <div class="p-3 bg-light rounded-3">
+                                <span class="text-muted small d-block">Selling Price</span>
+                                <h3 class="fw-bold text-success mb-0 mt-1">{{ currency }}{{ "%.2f"|format(product.selling_price) }}</h3>
+                                {% if product.discount > 0 %}
+                                <small class="text-muted text-decoration-line-through">{{ currency }}{{ "%.2f"|format(product.selling_price + product.discount) }}</small>
+                                <span class="badge bg-danger ms-1" style="font-size:0.75rem;">-{{ currency }}{{ "%.2f"|format(product.discount) }} Off</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Stock info -->
+                        <div class="col-sm-6">
+                            <div class="p-3 bg-light rounded-3">
+                                <span class="text-muted small d-block">Stock Level</span>
+                                <h3 class="fw-bold mb-0 mt-1 {% if product.stock_quantity <= product.min_stock %}text-danger{% else %}text-primary{% endif %}">
+                                    {{ product.stock_quantity }} units
+                                </h3>
+                                <small class="text-muted">Min Threshold: {{ product.min_stock }} units</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed parameters table -->
+                    <div class="table-responsive">
+                        <table class="table table-sm table-borderless align-middle mb-0" style="font-size: 0.9rem;">
+                            <tbody>
+                                <tr>
+                                    <td class="text-muted py-2" style="width: 140px;">SKU Code:</td>
+                                    <td class="fw-semibold text-dark font-monospace py-2">{{ product.sku }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted py-2">Barcode:</td>
+                                    <td class="fw-semibold text-dark font-monospace py-2">{{ product.barcode if product.barcode else 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted py-2">Purchase Price:</td>
+                                    <td class="fw-semibold text-dark py-2">{{ currency }}{{ "%.2f"|format(product.purchase_price) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted py-2">GST Rate / HSN:</td>
+                                    <td class="fw-semibold text-dark py-2">
+                                        {{ product.gst_rate }}% {% if product.hsn_code %}(HSN: {{ product.hsn_code }}){% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted py-2">Supplier:</td>
+                                    <td class="fw-semibold text-dark py-2">{{ product.supplier_name if product.supplier_name else 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted py-2">Expiry Date:</td>
+                                    <td class="fw-semibold py-2 {% if product.expiry_date and product.expiry_date < '2026-07-01' %}text-danger{% else %}text-dark{% endif %}">
+                                        {{ product.expiry_date if product.expiry_date else 'No Expiry' }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

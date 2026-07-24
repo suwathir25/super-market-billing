@@ -4,6 +4,34 @@ from app import create_app
 from app.models.database import init_db, query_db, execute_db
 from werkzeug.security import generate_password_hash
 
+
+def _load_dotenv():
+    """
+    Minimal .env file loader — no extra packages required.
+    Reads KEY=VALUE lines from a .env file in the project root and injects
+    them into os.environ ONLY if not already set (env vars take precedence).
+
+    Create a .env file in the same directory as run.py:
+        MAIL_USERNAME=yourshop@gmail.com
+        MAIL_PASSWORD=xxxx xxxx xxxx xxxx
+        SECRET_KEY=change-me-in-production
+    """
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+    if not os.path.isfile(env_path):
+        return
+    with open(env_path, encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, _, value = line.partition('=')
+            key   = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:   # env vars take precedence
+                os.environ[key] = value
+
+
+_load_dotenv()          # ← must run before create_app() reads os.environ
 app = create_app()
 
 def seed_database():

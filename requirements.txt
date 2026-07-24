@@ -1,1 +1,4 @@
 Flask>=2.2.0
+WeasyPrint>=59.0
+qrcode[pil]>=7.4
+

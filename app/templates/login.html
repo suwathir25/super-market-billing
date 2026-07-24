@@ -11,13 +11,28 @@
 </head>
 <body class="login-bg">
 
+    <!-- Absolute Positioned Language Selector -->
+    <div style="position: absolute; top: 20px; right: 20px; z-index: 1000;">
+        <div class="dropdown">
+            <button class="btn btn-light btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                🌐 <span id="current-lang-label">English</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="languageDropdown" style="border-radius: 10px; border-color: var(--border-color);">
+                <li><a class="dropdown-item" href="#" onclick="changeLanguage('en')">English</a></li>
+                <li><a class="dropdown-item" href="#" onclick="changeLanguage('ta')">தமிழ்</a></li>
+                <li><a class="dropdown-item" href="#" onclick="changeLanguage('hi')">हिन्दी</a></li>
+                <li><a class="dropdown-item" href="#" onclick="changeLanguage('te')">తెలుగు</a></li>
+            </ul>
+        </div>
+    </div>
+
     <div class="login-container">
         <!-- Main glass card -->
         <div class="login-glass-card animate-fade-up">
             <div class="text-center mb-4">
                 <span style="font-size: 3.5rem;">🛒</span>
                 <h3 class="fw-bold mt-2 mb-1" style="color: var(--primary-blue);">SuperMart POS</h3>
-                <p class="text-muted small">Billing & Inventory Management System</p>
+                <p class="text-muted small" data-i18n="billing_inventory_system">Billing & Inventory Management System</p>
             </div>
 
             <!-- Flash alerts inside login -->
@@ -35,10 +50,10 @@
             <form action="{{ url_for('auth.login') }}" method="POST" class="needs-validation" novalidate>
                 <!-- Username field -->
                 <div class="mb-3">
-                    <label for="username" class="form-label fw-semibold">Username</label>
+                    <label for="username" class="form-label fw-semibold" data-i18n="username">Username</label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px; border-color: var(--border-color);">👤</span>
-                        <input type="text" name="username" id="username" class="form-control border-start-0" placeholder="Enter username" required style="border-radius: 0 12px 12px 0;" autocomplete="username">
+                        <input type="text" name="username" id="username" class="form-control border-start-0" placeholder="Enter username" data-i18n-placeholder="enter_username" required style="border-radius: 0 12px 12px 0;" autocomplete="username">
                     </div>
                     <div class="invalid-feedback">Please enter a valid username.</div>
                 </div>
@@ -46,26 +61,26 @@
                 <!-- Password field -->
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <label for="password" class="form-label fw-semibold mb-0">Password</label>
-                        <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small fw-semibold" style="color: var(--primary-light-blue);">Forgot Password?</a>
+                        <label for="password" class="form-label fw-semibold mb-0" data-i18n="password">Password</label>
+                        <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small fw-semibold" style="color: var(--primary-light-blue);" data-i18n="forgot_password">Forgot Password?</a>
                     </div>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px; border-color: var(--border-color);">🔒</span>
-                        <input type="password" name="password" id="password" class="form-control border-start-0" placeholder="Enter password" required style="border-radius: 0 12px 12px 0;" autocomplete="current-password">
+                        <input type="password" name="password" id="password" class="form-control border-start-0" placeholder="Enter password" data-i18n-placeholder="enter_password" required style="border-radius: 0 12px 12px 0;" autocomplete="current-password">
                     </div>
                     <div class="invalid-feedback">Please enter your password.</div>
                 </div>
 
                 <!-- Login Button -->
                 <div class="mt-4">
-                    <button type="submit" class="btn btn-primary w-100 py-2.5">
+                    <button type="submit" class="btn btn-primary w-100 py-2.5" data-i18n="secure_login">
                         Secure Login
                     </button>
                 </div>
             </form>
 
             <div class="text-center mt-4 border-top pt-3">
-                <small class="text-muted">For help, contact system administrator</small>
+                <small class="text-muted" data-i18n="contact_admin">For help, contact system administrator</small>
             </div>
         </div>
     </div>
@@ -73,5 +88,7 @@
     <!-- Bootstrap & Custom Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <!-- Multilingual i18n Engine -->
+    <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
 </body>
 </html>

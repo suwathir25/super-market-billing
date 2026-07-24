@@ -8,7 +8,7 @@ from app.models.category import Category
 from app.models.database import query_db
 
 class ProductController:
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
     @staticmethod
     def allowed_file(filename):
@@ -17,12 +17,19 @@ class ProductController:
 
     @staticmethod
     def save_image(file):
-        """Saves product image and returns the web reference path."""
+        """Saves product image, compresses it, and returns the web reference path."""
         if not file or file.filename == '':
             return None
             
         if not ProductController.allowed_file(file.filename):
-            raise ValueError("Invalid image file format. Allowed: png, jpg, jpeg, gif, webp")
+            raise ValueError("Invalid image file format. Allowed: png, jpg, jpeg, webp")
+
+        # Check file size (max 5 MB)
+        file.seek(0, os.SEEK_END)
+        size = file.tell()
+        file.seek(0)
+        if size > 5 * 1024 * 1024:
+            raise ValueError("File size exceeds the maximum limit of 5 MB.")
 
         filename = secure_filename(file.filename)
         import time
@@ -31,7 +38,22 @@ class ProductController:
         upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'products')
         os.makedirs(upload_dir, exist_ok=True)
         
-        file.save(os.path.join(upload_dir, filename))
+        target_path = os.path.join(upload_dir, filename)
+
+        # Open and compress the image
+        from PIL import Image
+        img = Image.open(file)
+        
+        # Max width/height limit
+        max_size = (800, 800)
+        img.thumbnail(max_size, Image.Resampling.LANCZOS if hasattr(Image, 'Resampling') else Image.ANTIALIAS)
+        
+        # Determine output format
+        img_format = img.format if img.format else 'JPEG'
+        if img.mode in ('RGBA', 'LA') and img_format.upper() in ('JPEG', 'JPG'):
+            img = img.convert('RGB')
+            
+        img.save(target_path, format=img_format, quality=75, optimize=True)
         return f"uploads/products/{filename}"
 
     @staticmethod
@@ -46,7 +68,7 @@ class ProductController:
     def create_product(form_data, file=None):
         """Validates and processes product insertions."""
         image_path = None
-        if file:
+        if file and file.filename != '':
             try:
                 image_path = ProductController.save_image(file)
             except ValueError as e:
@@ -86,10 +108,17 @@ class ProductController:
     @staticmethod
     def update_product(product_id, form_data, file=None):
         """Validates and processes product updates."""
+        # Get existing product to delete old file if replaced/removed
+        prod = Product.get_by_id(product_id)
+        
+        clear_image = form_data.get('delete_image') == '1'
         image_path = None
+
         if file and file.filename != '':
             try:
                 image_path = ProductController.save_image(file)
+                # If we successfully saved a new image, we don't clear the image
+                clear_image = False
             except ValueError as e:
                 return False, str(e)
 
@@ -113,7 +142,8 @@ class ProductController:
             stock_quantity=form_data.get('stock_quantity', 0),
             min_stock=form_data.get('min_stock', 5),
             image_path=image_path,
-            status=form_data.get('status', 'active')
+            status=form_data.get('status', 'active'),
+            clear_image=clear_image
         )
 
         if not success:
@@ -123,6 +153,14 @@ class ProductController:
                 except OSError:
                     pass
             return False, err
+            
+        # Clean up old image if cleared or replaced
+        if (clear_image or image_path) and prod and prod.image_path:
+            try:
+                os.remove(os.path.join(current_app.root_path, 'static', prod.image_path))
+            except OSError:
+                pass
+                
         return True, "Product updated successfully."
 
     @staticmethod

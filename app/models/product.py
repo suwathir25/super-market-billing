@@ -163,7 +163,7 @@ class Product:
     @classmethod
     def update(cls, product_id, name, sku, purchase_price, selling_price, category_id=None, supplier_id=None,
                brand=None, barcode=None, discount=0.0, gst_rate=0.0, hsn_code=None, expiry_date=None,
-               stock_quantity=0, min_stock=5, image_path=None, status='active'):
+               stock_quantity=0, min_stock=5, image_path=None, status='active', clear_image=False):
         """Updates product parameters."""
         name = name.strip()
         sku = sku.strip()
@@ -193,7 +193,19 @@ class Product:
                 return False, f"Product Barcode '{barcode}' already exists."
 
         try:
-            if image_path:
+            if clear_image:
+                execute_db("""
+                    UPDATE products SET 
+                        name=?, sku=?, barcode=?, category_id=?, supplier_id=?, brand=?, purchase_price=?, 
+                        selling_price=?, discount=?, gst_rate=?, hsn_code=?, expiry_date=?, stock_quantity=?, 
+                        min_stock=?, image_path=NULL, status=? 
+                    WHERE id=?
+                """, (
+                    name, sku, barcode, category_id if category_id else None, supplier_id if supplier_id else None,
+                    brand, float(purchase_price), float(selling_price), float(discount), float(gst_rate),
+                    hsn_code, expiry_date, int(stock_quantity), int(min_stock), status, product_id
+                ))
+            elif image_path:
                 execute_db("""
                     UPDATE products SET 
                         name=?, sku=?, barcode=?, category_id=?, supplier_id=?, brand=?, purchase_price=?, 

@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.models.database import query_db, execute_db
 
 class User:
-    def __init__(self, id, username, password_hash, email, phone, role, status, created_at):
+    def __init__(self, id, username, password_hash, email, phone, role, status, created_at, language='en'):
         self.id = id
         self.username = username
         self.password_hash = password_hash
@@ -12,6 +12,7 @@ class User:
         self.role = role
         self.status = status
         self.created_at = created_at
+        self.language = language
 
     @staticmethod
     def validate_user_data(username, email, password=None, role=None, phone=None):
@@ -65,7 +66,8 @@ class User:
             phone=row['phone'],
             role=row['role'],
             status=row['status'],
-            created_at=row['created_at']
+            created_at=row['created_at'],
+            language=row.get('language', 'en') or 'en'
         )
 
     @classmethod

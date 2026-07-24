@@ -2,7 +2,7 @@
 
 {% block title %}Dashboard{% endblock %}
 
-{% block page_header %}Dashboard Overview{% endblock %}
+{% block page_header %}<span data-i18n="dashboard_overview">Dashboard Overview</span>{% endblock %}
 
 {% block content %}
 <!-- Metrics cards -->
@@ -11,11 +11,11 @@
     <div class="col-md-3 mb-4">
         <div class="card stat-card shadow-sm border-0">
             <div>
-                <h6 class="text-muted small text-uppercase fw-semibold mb-1">Today's Sales</h6>
+                <h6 class="text-muted small text-uppercase fw-semibold mb-1" data-i18n="today_sales">Today's Sales</h6>
                 <h3 class="fw-bold mb-0" style="color: var(--primary-blue);">{{ data.sales }}</h3>
             </div>
             <div class="stat-icon icon-blue">
-                ₹
+                {{ currency }}
             </div>
         </div>
     </div>
@@ -24,7 +24,7 @@
     <div class="col-md-3 mb-4">
         <div class="card stat-card shadow-sm border-0">
             <div>
-                <h6 class="text-muted small text-uppercase fw-semibold mb-1">Today's Profit</h6>
+                <h6 class="text-muted small text-uppercase fw-semibold mb-1" data-i18n="today_profit">Today's Profit</h6>
                 <h3 class="fw-bold mb-0" style="color: var(--secondary-green);">{{ data.profit }}</h3>
             </div>
             <div class="stat-icon icon-green">
@@ -37,7 +37,7 @@
     <div class="col-md-3 mb-4">
         <div class="card stat-card shadow-sm border-0">
             <div>
-                <h6 class="text-muted small text-uppercase fw-semibold mb-1">Total Products</h6>
+                <h6 class="text-muted small text-uppercase fw-semibold mb-1" data-i18n="total_products">Total Products</h6>
                 <h3 class="fw-bold mb-0">{{ data.products }}</h3>
             </div>
             <div class="stat-icon icon-orange">
@@ -50,7 +50,7 @@
     <div class="col-md-3 mb-4">
         <div class="card stat-card shadow-sm border-0">
             <div>
-                <h6 class="text-muted small text-uppercase fw-semibold mb-1">Low Stock Alerts</h6>
+                <h6 class="text-muted small text-uppercase fw-semibold mb-1" data-i18n="low_stock_alerts">Low Stock Alerts</h6>
                 <h3 class="fw-bold mb-0 {% if data.low_stock > 0 %}text-danger{% endif %}">{{ data.low_stock }}</h3>
             </div>
             <div class="stat-icon icon-red">
@@ -62,19 +62,19 @@
 
 <!-- Quick Actions -->
 <div class="card shadow-sm border-0 mb-4 animate-fade-up">
-    <h5 class="fw-bold mb-3 text-dark">Quick Actions</h5>
+    <h5 class="fw-bold mb-3 text-dark" data-i18n="quick_actions">Quick Actions</h5>
     <div class="d-flex flex-wrap gap-3">
-        <a href="{{ url_for('pos.index') }}" class="btn btn-outline-primary d-flex align-items-center gap-2 loading-link" style="border-radius: 12px; padding: 10px 20px;">
+        <a href="{{ url_for('pos.index') }}" class="btn btn-outline-primary d-flex align-items-center gap-2 loading-link" style="border-radius: 12px; padding: 10px 20px;" data-i18n="pos_billing">
             <span>🧾</span> POS Billing
         </a>
-        <a href="{{ url_for('product.add') }}" class="btn btn-outline-success d-flex align-items-center gap-2 loading-link" style="border-radius: 12px; padding: 10px 20px;">
+        <a href="{{ url_for('product.add') }}" class="btn btn-outline-success d-flex align-items-center gap-2 loading-link" style="border-radius: 12px; padding: 10px 20px;" data-i18n="add_product">
             <span>➕</span> Add Product
         </a>
-        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-info d-flex align-items-center gap-2 loading-link" style="border-radius: 12px; padding: 10px 20px;">
+        <a href="{{ url_for('reports.index') }}" class="btn btn-outline-info d-flex align-items-center gap-2 loading-link" style="border-radius: 12px; padding: 10px 20px;" data-i18n="view_reports">
             <span>📊</span> View Reports
         </a>
         {% if g.user and g.user.role == 'admin' %}
-        <a href="{{ url_for('user.list_users') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2" style="border-radius: 12px; padding: 10px 20px;">
+        <a href="{{ url_for('user.list_users') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2" style="border-radius: 12px; padding: 10px 20px;" data-i18n="manage_users">
             <span>👥</span> Manage Users
         </a>
         {% endif %}
@@ -87,7 +87,7 @@
     <div class="col-lg-8 mb-4">
         <div class="card shadow-sm border-0 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0 text-dark">Sales & Profit Trends</h5>
+                <h5 class="fw-bold mb-0 text-dark" data-i18n="sales_profit_trends">Sales & Profit Trends</h5>
                 <select class="form-select form-select-sm w-auto border-0 bg-light" id="chart-filter" style="border-radius: 8px;">
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
@@ -102,7 +102,7 @@
     <!-- Top Selling and alerts list -->
     <div class="col-lg-4 mb-4">
         <div class="card shadow-sm border-0 h-100">
-            <h5 class="fw-bold mb-3 text-dark">Top Selling Products</h5>
+            <h5 class="fw-bold mb-3 text-dark" data-i18n="top_selling_products">Top Selling Products</h5>
             
             {% if data.top_products %}
                 <ul class="list-group list-group-flush">
@@ -112,7 +112,7 @@
                                 <span style="font-size: 1.2rem;">⭐</span>
                                 <div>
                                     <div class="fw-bold text-dark">{{ item.name }}</div>
-                                    <small class="text-muted">Stock Remaining: {{ item.stock_quantity }}</small>
+                                    <small class="text-muted"><span data-i18n="current_stock">Current Stock</span>: {{ item.stock_quantity }}</small>
                                 </div>
                             </div>
                             <span class="badge bg-success rounded-pill" style="padding: 6px 12px;">{{ item.total_sold }} sold</span>
@@ -134,15 +134,15 @@
     <!-- Recent Bills -->
     <div class="col-lg-6 mb-4">
         <div class="card shadow-sm border-0 h-100">
-            <h5 class="fw-bold mb-3 text-dark">Recent Bills</h5>
+            <h5 class="fw-bold mb-3 text-dark" data-i18n="recent_bills">Recent Bills</h5>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr class="table-light">
-                            <th>Bill No</th>
-                            <th>Customer</th>
-                            <th>Amount</th>
-                            <th>Status</th>
+                            <th data-i18n="bill_number">Bill No</th>
+                            <th data-i18n="customer">Customer</th>
+                            <th data-i18n="amount">Amount</th>
+                            <th data-i18n="status">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -173,15 +173,15 @@
     <!-- Low Stock Items List -->
     <div class="col-lg-6 mb-4">
         <div class="card shadow-sm border-0 h-100">
-            <h5 class="fw-bold mb-3 text-dark">Low Stock Items</h5>
+            <h5 class="fw-bold mb-3 text-dark" data-i18n="low_stock_items">Low Stock Items</h5>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr class="table-light">
-                            <th>Product Name</th>
-                            <th>Current Stock</th>
-                            <th>Min Stock Threshold</th>
-                            <th>Status</th>
+                            <th data-i18n="product_name">Product Name</th>
+                            <th data-i18n="current_stock">Current Stock</th>
+                            <th data-i18n="min_stock_threshold">Min Stock Threshold</th>
+                            <th data-i18n="status">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -192,13 +192,13 @@
                                     <td class="text-danger fw-bold">{{ item.stock_quantity }}</td>
                                     <td class="text-muted">{{ item.min_stock }}</td>
                                     <td>
-                                        <span class="badge bg-danger">Reorder Required</span>
+                                        <span class="badge bg-danger" data-i18n="reorder_required">Reorder Required</span>
                                     </td>
                                 </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="4" class="text-center py-4 text-success">
+                                <td colspan="4" class="text-center py-4 text-success" data-i18n="all_products_well_stocked">
                                     <span>✔</span> All products are well stocked!
                                 </td>
                             </tr>
@@ -221,14 +221,14 @@
         // Mock weekly/monthly data matching theme (Blue/Green gradients)
         const chartData = {
             weekly: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                sales: [12000, 15000, 18000, 14000, 22000, 28000, 25000],
-                profit: [2400, 3100, 3600, 2900, 4800, 6200, 5000]
+                labels: {{ data.weekly_labels | tojson }},
+                sales: {{ data.weekly_sales | tojson }},
+                profit: {{ data.weekly_profit | tojson }}
             },
             monthly: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                sales: [320000, 390000, 410000, 380000, 490000, 550000],
-                profit: [64000, 78000, 82000, 76000, 98000, 110000]
+                labels: {{ data.monthly_labels | tojson }},
+                sales: {{ data.monthly_sales | tojson }},
+                profit: {{ data.monthly_profit | tojson }}
             }
         };
 
@@ -246,7 +246,7 @@
                 labels: chartData.weekly.labels,
                 datasets: [
                     {
-                        label: 'Gross Sales (₹)',
+                        label: 'Gross Sales ({{ currency }})',
                         data: chartData.weekly.sales,
                         borderColor: '#2563eb',
                         borderWidth: 3,
@@ -255,7 +255,7 @@
                         tension: 0.4
                     },
                     {
-                        label: 'Net Profit (₹)',
+                        label: 'Net Profit ({{ currency }})',
                         data: chartData.weekly.profit,
                         borderColor: '#10b981',
                         borderWidth: 3,
@@ -282,7 +282,7 @@
                         grid: { color: 'rgba(0, 0, 0, 0.05)' },
                         ticks: {
                             font: { family: 'Outfit' },
-                            callback: function(value) { return '₹' + value.toLocaleString(); }
+                            callback: function(value) { return '{{ currency }}' + value.toLocaleString(); }
                         }
                     },
                     x: {
